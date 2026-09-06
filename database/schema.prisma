@@ -1,0 +1,129 @@
+// =============================================================================
+// PrivateData AI - Prisma Schema
+// Compatible with PostgreSQL (Production) and SQLite (Local Quickstart)
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  address      String         @unique // Contributor / Developer wallet or identity
+  role         String         // CONTRIBUTOR, DEVELOPER, AUDITOR
+  name         String
+  reputation   Reputation?
+  projects     Project[]
+  contributions Contribution[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Project {
+  id             String               @id // e.g. AI-PROJECT-001
+  name           String
+  category       String               // Healthcare, Finance, etc.
+  description    String
+  organization   String
+  rewardPool     String
+  status         String               @default("ACTIVE")
+  developerId    String
+  developer      User                 @relation(fields: [developerId], references: [id])
+  versions       RequirementVersion[]
+  contributions  Contribution[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+}
+
+model RequirementVersion {
+  id               String         @id @default(cuid())
+  projectId        String
+  project          Project        @relation(fields: [projectId], references: [id])
+  version          String         // "1.0", "1.1"
+  policyHash       String         @unique // SHA-256 hash ensuring immutability
+  minRecords       Int
+  minCompleteness  Float          // e.g. 95.0
+  maxDuplicateRate Float          // e.g. 5.0
+  minQualityScore  Int            // e.g. 90
+  allowedFormats   String[]       // ["CSV", "JSON"]
+  requiredFields   String[]       // ["age", "gender", ...]
+  customConditions Json?
+  isImmutable      Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  contributions    Contribution[]
+}
+
+model Contribution {
+  id                  String             @id // e.g. DC-1024
+  projectId           String
+  project             Project            @relation(fields: [projectId], references: [id])
+  contributorId       String
+  contributor         User               @relation(fields: [contributorId], references: [id])
+  versionId           String
+  version             RequirementVersion @relation(fields: [versionId], references: [id])
+  datasetCommitment   String             // H(salt || data) - NEVER RAW DATA
+  status              String             // PENDING, VERIFIED, ACCEPTED, REJECTED
+  proofStatus         String             // VALID, INVALID
+  qualityScore        Int
+  completeness        Float
+  duplicateRate       Float
+  recordCount         Int
+  format              String
+  disclosureRequested Boolean            @default(false)
+  disclosureConsented Boolean            @default(false)
+  proof               ZKProof?
+  auditRecords        AuditTrail[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model ZKProof {
+  id                     String       @id // zk-proof-xxxx
+  contributionId         String       @unique
+  contribution           Contribution @relation(fields: [contributionId], references: [id])
+  protocol               String       // groth16_midnight
+  curve                  String       // bls12-381
+  compactContractAddress String
+  circuitHash            String
+  a                      String[]
+  b                      Json
+  c                      String[]
+  nonce                  String
+  signature              String
+  expiresAt              DateTime
+  verifiedAt             DateTime?
+  isValid                Boolean      @default(true)
+  createdAt              DateTime     @default(now())
+}
+
+model Reputation {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  user                    User     @relation(fields: [userId], references: [id])
+  verifiedContributions   Int      @default(0)
+  successfulVerifications Int      @default(0)
+  averageQuality          Float    @default(0.0)
+  requirementMatchRate    Float    @default(0.0)
+  updatedAt               DateTime @updatedAt
+}
+
+model AuditTrail {
+  id                    String       @id // ver-xxxx
+  contributionId        String
+  contribution          Contribution @relation(fields: [contributionId], references: [id])
+  projectId             String
+  requirementVersion    String
+  policyHash            String
+  proofStatus           String
+  verifier              String
+  datasetCommitment     String
+  network               String
+  previousAuditHash     String
+  entryHash             String       @unique
+  createdAt             DateTime     @default(now())
+}

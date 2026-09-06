@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: privatedata_ai_db
+    environment:
+      POSTGRES_USER: privatedata
+      POSTGRES_PASSWORD: privatedata_secret
+      POSTGRES_DB: privatedata_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Optional Midnight Local Proof Server
+  midnight-proof-server:
+    image: midnightnetwork/proof-server:latest
+    container_name: midnight_proof_server
+    ports:
+      - "6300:6300"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
