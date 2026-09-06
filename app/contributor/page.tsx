@@ -328,15 +328,19 @@ export default function ContributorPage() {
           </p>
         </div>
 
-        {/* Live Privacy Guarantee Badge */}
-        <div className="p-3 rounded-xl bg-slate-900/90 border border-cyan-900/40 text-xs font-mono flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-            <EyeOff className="w-4 h-4" />
+      {/* Quick Visual Guide Banner */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/40 via-cyan-950/50 to-indigo-950/40 border border-cyan-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-300 shrink-0">
+            <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-emerald-400 font-semibold">ZERO RAW DATA ACCESS</div>
-            <div className="text-[10px] text-slate-400">Evaluated in local browser sandbox</div>
+            <span className="font-bold text-white block">🎯 Quick 3-Step Guide (इथे काय करायचं?):</span>
+            <span className="text-slate-300">
+              १. खाली <strong className="text-emerald-400">Dataset A</strong> आधीच निवडलेला आहे &rarr; २. खालील निळे <strong className="text-cyan-400">&ldquo;Generate Privacy Proof&rdquo;</strong> बटण दाबा &rarr; ३. नंतर हिरवे <strong className="text-emerald-400">&ldquo;Submit Proof to Midnight&rdquo;</strong> दाबा!
+            </span>
           </div>
+        </div>
         </div>
       </div>
 

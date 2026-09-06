@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import HelpAssistantWidget from '@/components/HelpAssistantWidget';
 
 export const metadata: Metadata = {
   title: 'PrivateData AI — Privacy-Preserving AI Data Contribution Platform',
@@ -36,6 +37,7 @@ export default function RootLayout({
         <main className="flex-grow">
           {children}
         </main>
+        <HelpAssistantWidget />
         <Footer />
       </body>
     </html>
