@@ -1,0 +1,195 @@
+// =============================================================================
+// Midnight Compact Smart Contract: PrivateData AI
+// "Prove that your data qualifies without revealing your data"
+//
+// Language: Midnight Compact DSL (Preprod / Testnet compatible)
+// Purpose: Zero-Knowledge Verification of Private AI Dataset Qualification
+// =============================================================================
+
+pragma language_version >= 0.14.0;
+
+import CompactStandardLibrary;
+
+// Ledger state representing the public verification registry
+export ledger verified_contributions: Map<Bytes<32>, ContributionRecord>;
+export ledger project_requirements: Map<Bytes<32>, RequirementSpec>;
+export ledger contributor_reputations: Map<Bytes<32>, ReputationScore>;
+
+// Struct for immutable requirement specifications
+export struct RequirementSpec {
+    project_id: Bytes<32>;
+    version: Uint<32>;
+    min_records: Uint<64>;
+    min_completeness: Uint<32>; // Multiplied by 100 for 2 decimal places (e.g. 9500 = 95.00%)
+    max_duplicate_rate: Uint<32>; // Multiplied by 100 (e.g. 500 = 5.00%)
+    min_quality_score: Uint<32>; // 0 - 100
+    allowed_format_hash: Bytes<32>;
+    required_schema_hash: Bytes<32>;
+    created_at: Uint<64>;
+    is_active: Boolean;
+}
+
+// Struct for verifiable on-chain contribution record (NO RAW DATA STORED)
+export struct ContributionRecord {
+    contribution_id: Bytes<32>;
+    project_id: Bytes<32>;
+    requirement_version: Uint<32>;
+    dataset_commitment: Bytes<32>; // H(salt || raw_dataset_hash)
+    contributor_id: Bytes<32>;
+    verified_at: Uint<64>;
+    is_qualified: Boolean;
+    proof_reference: Bytes<32>;
+}
+
+export struct ReputationScore {
+    total_contributions: Uint<32>;
+    successful_verifications: Uint<32>;
+    cumulative_quality: Uint<64>;
+}
+
+// Private witness containing confidential dataset metrics known ONLY to contributor
+witness dataset_private_witness(
+    dataset_commitment: Bytes<32>
+): (Uint<64>, Uint<32>, Uint<32>, Uint<32>, Bytes<32>, Bytes<32>, Bytes<32>);
+
+// Circuit: Register or update an AI Project requirement specification
+export circuit register_project_requirement(
+    project_id: Bytes<32>,
+    version: Uint<32>,
+    min_records: Uint<64>,
+    min_completeness: Uint<32>,
+    max_duplicate_rate: Uint<32>,
+    min_quality_score: Uint<32>,
+    allowed_format_hash: Bytes<32>,
+    required_schema_hash: Bytes<32>,
+    timestamp: Uint<64>
+): Void {
+    // Requirements must have non-zero standards
+    assert min_records > 0 "min_records must be positive";
+    assert min_completeness <= 10000 "min_completeness exceeds 100%";
+    assert min_quality_score <= 100 "min_quality_score exceeds 100";
+
+    const req_key = hash_requirement_key(project_id, version);
+    // Requirement version is immutable once registered
+    assert !project_requirements.member(req_key) "Requirement version already exists and is immutable";
+
+    project_requirements.insert(req_key, RequirementSpec {
+        project_id: project_id,
+        version: version,
+        min_records: min_records,
+        min_completeness: min_completeness,
+        max_duplicate_rate: max_duplicate_rate,
+        min_quality_score: min_quality_score,
+        allowed_format_hash: allowed_format_hash,
+        required_schema_hash: required_schema_hash,
+        created_at: timestamp,
+        is_active: true
+    });
+}
+
+// Circuit: Verify dataset qualification in Zero-Knowledge
+// Proves dataset satisfies requirements WITHOUT revealing raw rows or exact metric values
+export circuit verify_dataset_qualification(
+    contribution_id: Bytes<32>,
+    project_id: Bytes<32>,
+    requirement_version: Uint<32>,
+    dataset_commitment: Bytes<32>,
+    contributor_id: Bytes<32>,
+    timestamp: Uint<64>
+): Boolean {
+    // 1. Fetch requirement specification
+    const req_key = hash_requirement_key(project_id, requirement_version);
+    assert project_requirements.member(req_key) "Target project requirement does not exist";
+    const req = project_requirements.lookup(req_key);
+    assert req.is_active "Requirement specification is inactive";
+
+    // 2. Prevent replay attacks - contribution_id must be fresh
+    assert !verified_contributions.member(contribution_id) "Contribution ID has already been verified";
+
+    // 3. Obtain private dataset witness (evaluates inside ZK prover sandbox)
+    const (
+        actual_records,
+        actual_completeness,
+        actual_duplicate_rate,
+        actual_quality,
+        actual_format_hash,
+        actual_schema_hash,
+        witness_salt
+    ) = dataset_private_witness(dataset_commitment);
+
+    // 4. Verify cryptographic commitment integrity
+    // dataset_commitment == H(salt || actual_records || actual_completeness || actual_quality || schema_hash)
+    const computed_commitment = compute_dataset_commitment(
+        witness_salt,
+        actual_records,
+        actual_completeness,
+        actual_quality,
+        actual_schema_hash
+    );
+    assert computed_commitment == dataset_commitment "Commitment verification failed";
+
+    // 5. Zero-Knowledge Range & Compatibility Constraints
+    // Evaluates truth without exposing the actual figures to the verifier
+    const satisfies_records = actual_records >= req.min_records;
+    const satisfies_completeness = actual_completeness >= req.min_completeness;
+    const satisfies_duplicates = actual_duplicate_rate <= req.max_duplicate_rate;
+    const satisfies_quality = actual_quality >= req.min_quality_score;
+    const satisfies_format = actual_format_hash == req.allowed_format_hash;
+    const satisfies_schema = actual_schema_hash == req.required_schema_hash;
+
+    const is_qualified = satisfies_records &&
+                         satisfies_completeness &&
+                         satisfies_duplicates &&
+                         satisfies_quality &&
+                         satisfies_format &&
+                         satisfies_schema;
+
+    // Must strictly qualify to be certified
+    assert is_qualified "Dataset does not meet all project requirements";
+
+    // 6. Record verifiable qualification on the ledger (No raw records)
+    verified_contributions.insert(contribution_id, ContributionRecord {
+        contribution_id: contribution_id,
+        project_id: project_id,
+        requirement_version: requirement_version,
+        dataset_commitment: dataset_commitment,
+        contributor_id: contributor_id,
+        verified_at: timestamp,
+        is_qualified: true,
+        proof_reference: computed_commitment
+    });
+
+    // 7. Update privacy-preserving reputation score
+    if (contributor_reputations.member(contributor_id)) {
+        const rep = contributor_reputations.lookup(contributor_id);
+        contributor_reputations.insert(contributor_id, ReputationScore {
+            total_contributions: rep.total_contributions + 1,
+            successful_verifications: rep.successful_verifications + 1,
+            cumulative_quality: rep.cumulative_quality + (actual_quality as Uint<64>)
+        });
+    } else {
+        contributor_reputations.insert(contributor_id, ReputationScore {
+            total_contributions: 1,
+            successful_verifications: 1,
+            cumulative_quality: actual_quality as Uint<64>
+        });
+    }
+
+    return true;
+}
+
+// Helper: Hash project ID and version into a 32-byte key
+circuit hash_requirement_key(project_id: Bytes<32>, version: Uint<32>): Bytes<32> {
+    return sha256_combine_key(project_id, version);
+}
+
+// Helper: Compute cryptographic dataset commitment
+circuit compute_dataset_commitment(
+    salt: Bytes<32>,
+    records: Uint<64>,
+    completeness: Uint<32>,
+    quality: Uint<32>,
+    schema_hash: Bytes<32>
+): Bytes<32> {
+    return sha256_dataset_tuple(salt, records, completeness, quality, schema_hash);
+}
