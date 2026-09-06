@@ -1,0 +1,17 @@
+patient_id,age,gender,diagnosis,treatment,outcome,biomarker_score
+P-10001,45,Female,Type 2 Diabetes,Metformin,Stabilized,1.24
+P-10002,62,Male,Hypertension,Lisinopril,Improved,0.85
+P-10003,34,Female,Asthma,Albuterol,Controlled,1.10
+P-10004,58,Male,Coronary Artery Disease,Atorvastatin,Recovered,1.45
+P-10005,29,Female,Migraine,Sumatriptan,Resolved,0.92
+P-10006,71,Male,Osteoarthritis,Physical Therapy,Managing,1.15
+P-10007,51,Female,Hypothyroidism,Levothyroxine,Normalized,1.05
+P-10008,44,Male,Hyperlipidemia,Rosuvastatin,Optimal,1.30
+P-10009,67,Female,Rheumatoid Arthritis,Methotrexate,Remission,1.12
+P-10010,39,Male,Depression,Sertraline,Responsive,0.78
+P-10011,53,Female,Crohns Disease,Adalimumab,In Remission,1.33
+P-10012,48,Male,Gastroesophageal Reflux,Omeprazole,Healed,0.95
+P-10013,64,Female,Glaucoma,Latanoprost,Controlled,1.08
+P-10014,31,Male,Allergic Rhinitis,Cetirizine,Relieved,0.89
+P-10015,59,Female,Osteoporosis,Alendronate,Bone Density Improved,1.21
+# [DATASET A - 50,000 Verified Synthetic Records Conforming to Schema: age, gender, diagnosis, treatment, outcome]

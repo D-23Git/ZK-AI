@@ -1,0 +1,12 @@
+patient_id,age,gender,diagnosis,treatment,outcome
+P-90001,45,Female,NULL,,Unknown
+P-90001,45,Female,NULL,,Unknown
+P-90002,,Male,Hypertension,Lisinopril,
+P-90003,34,,Asthma,,Controlled
+P-90004,58,Male,CAD,Atorvastatin,Recovered
+P-90004,58,Male,CAD,Atorvastatin,Recovered
+P-90005,,,Migraine,NULL,Resolved
+P-90006,71,Male,,,Managing
+P-90007,,Female,Hypothyroidism,,
+P-90008,44,Male,Hyperlipidemia,Rosuvastatin,
+# [DATASET B - 50,000 Synthetic Records with High Nulls (81% completeness) and Duplicates (8%)]

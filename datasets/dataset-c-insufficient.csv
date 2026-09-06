@@ -1,0 +1,6 @@
+patient_id,age,gender,diagnosis,treatment,outcome,biomarker_score
+P-001,42,Female,Cardiology Stage 1,Beta Blocker,Optimal,1.31
+P-002,55,Male,Cardiology Stage 2,ACE Inhibitor,Improved,1.18
+P-003,38,Female,Cardiology Stage 1,Lifestyle Intervention,Optimal,1.05
+P-004,67,Male,Cardiology Stage 3,Combination,Stable,1.40
+# [DATASET C - 4,500 Synthetic Records (Below 10,000 threshold), Quality: 96]
