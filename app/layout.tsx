@@ -3,6 +3,7 @@ import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import HelpAssistantWidget from '@/components/HelpAssistantWidget';
+import { WalletProvider } from '@/components/WalletContext';
 
 export const metadata: Metadata = {
   title: 'PrivateData AI — Privacy-Preserving AI Data Contribution Platform',
@@ -33,12 +34,14 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-[#070B14] text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950 flex flex-col">
-        <Navbar />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <HelpAssistantWidget />
-        <Footer />
+        <WalletProvider>
+          <Navbar />
+          <main className="flex-grow">
+            {children}
+          </main>
+          <HelpAssistantWidget />
+          <Footer />
+        </WalletProvider>
       </body>
     </html>
   );

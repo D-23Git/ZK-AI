@@ -510,7 +510,7 @@ export default function DeveloperPage() {
               <li>• Minimum {aiResponse.minRecords.toLocaleString()} records</li>
               <li>• Completeness &ge; {aiResponse.minCompleteness}%</li>
               <li>• Duplicate rate &le; {aiResponse.maxDuplicateRate}%</li>
-              <li>• Required fields: {aiResponse.requiredFields.join(', ')}</li>
+              <li>• Required fields: {(aiResponse.requiredFields || []).join(', ')}</li>
               <li>• Quality score &ge; {aiResponse.minQualityScore}</li>
             </ul>
           </div>

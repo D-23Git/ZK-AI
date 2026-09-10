@@ -42,7 +42,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       );
 
       project.currentVersion = nextVersion;
-      project.requirements = policy.requirements;
+      project.requirements = {
+        ...policy.requirements,
+        allowedFormats: policy.requirements.requiredFormat || project.requirements.allowedFormats || ['CSV', 'JSON'],
+        requiredFields: policy.requirements.requiredFields || project.requirements.requiredFields || ['age', 'gender', 'diagnosis', 'treatment', 'outcome'],
+      };
       project.requirementVersions.unshift({
         version: nextVersion,
         publishedAt: Date.now(),

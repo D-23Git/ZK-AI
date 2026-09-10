@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import ArchitectureDiagram from '@/components/ArchitectureDiagram';
 import LivePlayground from '@/components/LivePlayground';
+import { WalletButton } from '@/components/WalletConnect';
 
 export default function HomePage() {
   return (
@@ -37,7 +38,7 @@ export default function HomePage() {
           {/* Badge */}
           <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-800/40 text-cyan-300 text-xs font-mono mb-4 shadow-sm shadow-cyan-500/10">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Midnight Zero-Knowledge AI Data Infrastructure</span>
+            <span>Midnight Zero-Knowledge AI Data Infrastructure • Preprod Live</span>
           </div>
 
           {/* Headline */}
@@ -53,10 +54,19 @@ export default function HomePage() {
             Prove your dataset meets AI project requirements without exposing the underlying sensitive records.
           </p>
 
-          {/* Quick Guide in Marathi & English for instant clarity */}
-          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900/90 border border-cyan-900/40 text-xs font-mono text-cyan-300">
-            <span className="text-white font-bold">👉 काय करायचं? (Quickstart):</span>
-            <span className="text-slate-300">खालील Instant Sandbox मध्ये १ क्लिक करून ZK प्रूफ कसे बनते ते थेट बघा!</span>
+          {/* Portal Wallet Connect & Quick Guide Callout */}
+          <div className="mt-6 max-w-2xl mx-auto p-4 rounded-2xl bg-gradient-to-r from-slate-900/90 via-cyan-950/40 to-slate-900/90 border border-cyan-800/50 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+            <div>
+              <div className="text-xs font-mono font-bold text-cyan-300 flex items-center gap-1.5">
+                <span>⏱️ Midnight 1AM &amp; Lace Wallet Integration</span>
+              </div>
+              <p className="text-xs text-slate-300 mt-1">
+                Connect your 1AM Wallet or Midnight Lace Wallet to sign ZK proofs &amp; submit verified dataset metrics on Preprod.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <WalletButton />
+            </div>
           </div>
 
           {/* Action CTAs */}
@@ -66,7 +76,7 @@ export default function HomePage() {
               className="w-full sm:w-auto px-7 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center space-x-2 transition-all hover:scale-105"
             >
               <Lock className="w-4 h-4" />
-              <span>1. डेटा सबमिट करा (Contributor Studio)</span>
+              <span>Contribute Data (Role 1)</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
 
@@ -75,7 +85,7 @@ export default function HomePage() {
               className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-600 font-semibold text-sm flex items-center justify-center space-x-2 transition-all"
             >
               <Brain className="w-4 h-4 text-cyan-400" />
-              <span>2. AI डेव्हलपर व्हा (Developer Portal)</span>
+              <span>AI Developer Portal (Role 2)</span>
             </Link>
 
             <Link
@@ -83,7 +93,7 @@ export default function HomePage() {
               className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-950/60 hover:bg-slate-900 text-slate-300 border border-slate-800 font-medium text-sm flex items-center justify-center space-x-2 transition-all"
             >
               <Scale className="w-4 h-4 text-purple-400" />
-              <span>3. ऑडिट तपासा (Auditor Registry)</span>
+              <span>Auditor Registry (Role 3)</span>
             </Link>
           </div>
         </div>
@@ -207,7 +217,7 @@ export default function HomePage() {
               href="/contributor"
               className="w-full py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
             >
-              <span>डेटा कॉन्ट्रिब्युटर स्टुडिओ उघडा</span>
+              <span>Open Contributor Studio</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -232,7 +242,7 @@ export default function HomePage() {
               href="/developer"
               className="w-full py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
             >
-              <span>AI डेव्हलपर पोर्टल उघडा</span>
+              <span>Open Developer Portal</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -257,7 +267,7 @@ export default function HomePage() {
               href="/auditor"
               className="w-full py-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
             >
-              <span>ऑडिटर रजिस्ट्री उघडा</span>
+              <span>Open Auditor Registry</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

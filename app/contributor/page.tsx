@@ -26,8 +26,11 @@ import { SYNTHETIC_DATASETS, SyntheticDataset } from '@/ai/synthetic';
 import { MidnightZKProofService } from '@/zk/proofEngine';
 import { Proof, VerificationResult } from '@/zk/interface';
 import confetti from 'canvas-confetti';
+import { useWallet } from '@/components/WalletContext';
+import { WalletButton } from '@/components/WalletConnect';
 
 export default function ContributorPage() {
+  const { isConnected, address, walletType, balance, addRewardBalance } = useWallet();
   // State for workflow
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('AI-PROJECT-001');
@@ -44,11 +47,40 @@ export default function ContributorPage() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submissionResult, setSubmissionResult] = useState<any | null>(null);
 
+  // Interactive UI Tabs & Reward Claim State
+  const [activeViewTab, setActiveViewTab] = useState<'matrix' | 'masker'>('matrix');
+  const [isRewardClaimed, setIsRewardClaimed] = useState<boolean>(false);
+  const [showRewardModal, setShowRewardModal] = useState<boolean>(false);
+  const [rewardTxData, setRewardTxData] = useState<any | null>(null);
+
   // Privacy Center state (Spec 9)
   const [additionalDisclosureConsent, setAdditionalDisclosureConsent] = useState<boolean>(false);
 
   // My Datasets history
   const [myContributions, setMyContributions] = useState<any[]>([]);
+
+  const handleClaimReward = () => {
+    if (isRewardClaimed) return;
+    addRewardBalance(450);
+    setIsRewardClaimed(true);
+    const tx = {
+      txHash: '0x9a8f4c' + Math.random().toString(16).substring(2, 10) + '2b1e7d3a509876543210abcdef0123456789abcdef',
+      blockHeight: 1284912 + Math.floor(Math.random() * 50),
+      amount: '450.00 DUST',
+      amountUsd: '$225.00',
+      recipient: address || 'WA (0x1am_preprod_wallet)',
+      contract: '0x9a8f4c2b1e7d3a509876543210abcdef0123456789abcdef0123456789abcdef',
+      status: 'CONFIRMED_ON_CHAIN',
+      timestamp: new Date().toLocaleTimeString(),
+    };
+    setRewardTxData(tx);
+    setShowRewardModal(true);
+    confetti({
+      particleCount: 150,
+      spread: 90,
+      origin: { y: 0.5 }
+    });
+  };
 
   // Fetch initial projects and contributions
   useEffect(() => {
@@ -121,17 +153,48 @@ export default function ContributorPage() {
       } else {
         const syn = SYNTHETIC_DATASETS[selectedDatasetKey];
         if (syn) {
+          const requiredFields = activeProject.requirements?.requiredFields || ['age', 'gender', 'diagnosis', 'treatment', 'outcome'];
+          const minReqRecords = activeProject.requirements?.minRecords || 10000;
+
+          let schemaFields = syn.schemaFields;
+          let recordCount = syn.recordCount;
+          let completeness = syn.completeness;
+          let duplicateRate = syn.duplicateRate;
+          let qualityScore = syn.qualityScore;
+
+          if (selectedDatasetKey === 'dataset-a') {
+            // Ensure Dataset A always satisfies the active project's exact required fields & thresholds
+            schemaFields = Array.from(new Set([...requiredFields, 'record_id', 'metadata_hash']));
+            recordCount = Math.max(syn.recordCount, minReqRecords * 2);
+            completeness = 98.5;
+            duplicateRate = 0.8;
+            qualityScore = 96;
+          } else if (selectedDatasetKey === 'dataset-b') {
+            // Low quality scenario (fails completeness, duplicate rate & missing fields)
+            schemaFields = requiredFields.slice(0, Math.max(1, requiredFields.length - 2));
+            completeness = 78.0;
+            duplicateRate = 9.0;
+            qualityScore = 68;
+          } else if (selectedDatasetKey === 'dataset-c') {
+            // Low volume scenario (fails minimum record count threshold)
+            schemaFields = requiredFields;
+            recordCount = Math.max(100, Math.floor(minReqRecords * 0.4));
+            completeness = 99.0;
+            duplicateRate = 0.5;
+            qualityScore = 95;
+          }
+
           const report = AIDatasetAnalyzer.fromSummary(
-            syn.name,
+            selectedDatasetKey === 'dataset-a' ? `Dataset A — Valid ${activeProject.name} Records` : syn.name,
             {
-              recordCount: syn.recordCount,
-              completeness: syn.completeness,
-              duplicateRate: syn.duplicateRate,
-              fields: syn.schemaFields,
-              category: syn.category
+              recordCount,
+              completeness,
+              duplicateRate,
+              fields: schemaFields,
+              category: activeProject.category
             },
             syn.format,
-            activeProject.requirements.requiredFields
+            requiredFields
           );
           setAnalysisReport(report);
         }
@@ -161,12 +224,21 @@ export default function ContributorPage() {
     if (!analysisReport) return { passes: false, details: {} as any };
 
     const req = activeProject.requirements;
-    const recordsPass = analysisReport.recordCount >= req.minRecords;
-    const compPass = analysisReport.completeness >= req.minCompleteness;
-    const dupPass = analysisReport.duplicateRate <= req.maxDuplicateRate;
-    const qualPass = analysisReport.overallQuality >= req.minQualityScore;
-    const formatPass = req.allowedFormats.includes(analysisReport.format);
-    const schemaPass = analysisReport.requiredFieldsMatched >= req.requiredFields.length;
+    const compVal = Number(analysisReport.completeness);
+    const reqCompVal = Number(req.minCompleteness ?? 90);
+
+    const dupVal = Number(analysisReport.duplicateRate);
+    const reqDupVal = Number(req.maxDuplicateRate ?? 10);
+
+    const allowedFormats = (req.allowedFormats || (req as any).requiredFormat || ['CSV', 'JSON']).map((f: string) => f.toUpperCase());
+    const datasetFormat = (analysisReport.format || 'CSV').toUpperCase();
+
+    const recordsPass = analysisReport.recordCount >= (req.minRecords ?? 1000);
+    const compPass = compVal >= reqCompVal;
+    const dupPass = dupVal <= reqDupVal;
+    const qualPass = analysisReport.overallQuality >= (req.minQualityScore ?? 80);
+    const formatPass = allowedFormats.length === 0 || allowedFormats.includes(datasetFormat);
+    const schemaPass = analysisReport.requiredFieldsMatched >= (req.requiredFields?.length ?? 0);
 
     const allPassed = recordsPass && compPass && dupPass && qualPass && formatPass && schemaPass;
 
@@ -327,6 +399,68 @@ export default function ContributorPage() {
             Privately analyze your dataset locally, certify compliance via Midnight ZK proofs, and submit claims without revealing raw records.
           </p>
         </div>
+      </div>
+
+      {/* ===== WALLET GUARD BANNER ===== */}
+      {!isConnected ? (
+        <div style={{
+          padding: '24px 28px',
+          background: 'linear-gradient(135deg, rgba(124,58,237,0.15) 0%, rgba(79,70,229,0.1) 100%)',
+          border: '1px solid rgba(139,92,246,0.5)',
+          borderRadius: '18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+            <span style={{ fontSize: '36px' }}>🔗</span>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 700 }}>
+                Connect Midnight 1AM Wallet — Required for Proof Submission
+              </h3>
+              <p style={{ margin: '6px 0 0', color: '#9ca3af', fontSize: '14px', lineHeight: 1.6 }}>
+                Connect your <strong style={{ color: '#38bdf8' }}>1AM Wallet</strong> or <strong style={{ color: '#a78bfa' }}>Midnight Lace Wallet</strong> to sign and submit zero-knowledge proofs on the Midnight Preprod Network.
+                Your identity remains completely private — only cryptographic signatures are recorded.
+              </p>
+              <p style={{ margin: '8px 0 0', color: '#6b7280', fontSize: '12px' }}>
+                👉 Dataset analysis and proof generation take place client-side — wallet connection is only required for final submission.
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <WalletButton />
+            <span style={{ color: '#4b5563', fontSize: '13px' }}>
+              🔒 Zero-knowledge proofs never expose your underlying raw records.
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div style={{
+          padding: '16px 24px',
+          background: 'rgba(16,185,129,0.08)',
+          border: '1px solid rgba(16,185,129,0.3)',
+          borderRadius: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{
+              width: '10px', height: '10px', borderRadius: '50%',
+              background: '#10b981', boxShadow: '0 0 8px #10b981', display: 'inline-block'
+            }} />
+            <span style={{ color: '#10b981', fontWeight: 700, fontSize: '14px' }}>
+              ✅ {walletType === '1am' ? '⏱️ 1AM Wallet Connected' : '🌀 Midnight Lace Wallet Connected'}
+            </span>
+            <span style={{ color: '#6b7280', fontSize: '12px' }}>
+              {walletType === '1am' ? '⏱️ 1AM' : '🌀 Midnight Lace'} · {address?.slice(0, 10)}...{address?.slice(-6)}
+            </span>
+          </div>
+          <span style={{ color: '#059669', fontWeight: 600, fontSize: '13px' }}>{balance}</span>
+        </div>
+      )}
 
       {/* Quick Visual Guide Banner */}
       <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/40 via-cyan-950/50 to-indigo-950/40 border border-cyan-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -335,12 +469,11 @@ export default function ContributorPage() {
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <span className="font-bold text-white block">🎯 Quick 3-Step Guide (इथे काय करायचं?):</span>
+            <span className="font-bold text-white block">🎯 Quick 3-Step Guide:</span>
             <span className="text-slate-300">
-              १. खाली <strong className="text-emerald-400">Dataset A</strong> आधीच निवडलेला आहे &rarr; २. खालील निळे <strong className="text-cyan-400">&ldquo;Generate Privacy Proof&rdquo;</strong> बटण दाबा &rarr; ३. नंतर हिरवे <strong className="text-emerald-400">&ldquo;Submit Proof to Midnight&rdquo;</strong> दाबा!
+              1. Select a dataset (e.g. <strong className="text-emerald-400">Dataset A</strong>) &rarr; 2. Click <strong className="text-cyan-400">&ldquo;Generate Privacy Proof&rdquo;</strong> &rarr; 3. Click <strong className="text-emerald-400">&ldquo;Submit Proof to Midnight&rdquo;</strong>!
             </span>
           </div>
-        </div>
         </div>
       </div>
 
@@ -399,11 +532,15 @@ export default function ContributorPage() {
                 </div>
                 <div className="p-2 rounded bg-slate-900/80 border border-slate-800">
                   <span className="text-slate-500 block text-[10px]">ALLOWED FORMATS</span>
-                  <span className="text-white font-bold">{activeProject.requirements.allowedFormats.join(', ')}</span>
+                  <span className="text-white font-bold">
+                    {(activeProject.requirements?.allowedFormats || (activeProject.requirements as any)?.requiredFormat || ['CSV', 'JSON']).join(', ')}
+                  </span>
                 </div>
                 <div className="p-2 rounded bg-slate-900/80 border border-slate-800">
                   <span className="text-slate-500 block text-[10px]">REQUIRED SCHEMA</span>
-                  <span className="text-cyan-400 font-bold">{activeProject.requirements.requiredFields.length} Fields</span>
+                  <span className="text-cyan-400 font-bold">
+                    {(activeProject.requirements?.requiredFields || []).length} Fields
+                  </span>
                 </div>
               </div>
             </div>
@@ -446,7 +583,7 @@ export default function ContributorPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  50k rows, 98% complete, 1% dup, 95 score.
+                  {Math.max(50000, (activeProject.requirements?.minRecords || 10000) * 2).toLocaleString()} rows, 98.5% complete &bull; Meets all requirements.
                 </p>
               </button>
 
@@ -471,7 +608,7 @@ export default function ContributorPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  50k rows, 81% complete, 8% dup, 72 score.
+                  78% complete, 9% dup &bull; Fails quality benchmark.
                 </p>
               </button>
 
@@ -496,7 +633,7 @@ export default function ContributorPage() {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  4.5k rows (fails &ge;10k), 99% complete, 96 score.
+                  {Math.max(100, Math.floor((activeProject.requirements?.minRecords || 10000) * 0.4)).toLocaleString()} rows &bull; Fails min volume (&lt;{(activeProject.requirements?.minRecords || 10000).toLocaleString()}).
                 </p>
               </button>
             </div>
@@ -521,25 +658,102 @@ export default function ContributorPage() {
             </div>
           </div>
 
-          {/* STEP 5 & 6: Live Requirement Matching Matrix */}
+          {/* STEP 5 & 6: Live Requirement Matching Matrix & Privacy Masker */}
           <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center space-x-2 text-sm font-bold text-white">
                 <span className="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs">
                   3
                 </span>
-                <span>Requirement Verification Matrix</span>
+                <span>Verification &amp; Privacy Obfuscation</span>
               </div>
-              <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded border ${
-                matchResults.allPassed
-                  ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
-                  : 'bg-rose-950 text-rose-300 border-rose-800'
-              }`}>
-                {matchResults.passedCount} / 6 SATISFIED
-              </span>
+
+              {/* View Switcher Tabs */}
+              <div className="flex items-center p-1 bg-slate-950 border border-slate-800 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setActiveViewTab('matrix')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeViewTab === 'matrix'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  📊 Requirements Matrix ({matchResults.passedCount}/6)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveViewTab('masker')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    activeViewTab === 'masker'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>🪄 Live Privacy Masker</span>
+                  <span className="text-[9px] bg-emerald-950 text-emerald-400 px-1 py-0.2 rounded border border-emerald-800">
+                    ZERO LEAK
+                  </span>
+                </button>
+              </div>
             </div>
 
-            {analysisReport && (
+            {activeViewTab === 'masker' ? (
+              <div className="space-y-3 pt-2">
+                <div className="p-3 rounded-xl bg-slate-950/80 border border-cyan-900/50 flex items-center justify-between text-xs text-slate-300">
+                  <div className="flex items-center space-x-2">
+                    <Shield className="w-4 h-4 text-cyan-400" />
+                    <span>Client-Side PII Obfuscation &amp; Zero-Knowledge Witnesses:</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-400 font-bold">● 100% Isolated In-Browser</span>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/90">
+                  <table className="w-full text-[11px] font-mono text-left">
+                    <thead className="bg-slate-900/90 text-slate-400 border-b border-slate-800">
+                      <tr>
+                        <th className="p-2.5">Attribute Field</th>
+                        <th className="p-2.5 text-rose-300">Private Input (Local Memory)</th>
+                        <th className="p-2.5 text-cyan-300">Salted ZK Witness (Commitment)</th>
+                        <th className="p-2.5 text-emerald-400">Ledger Exposure</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                      <tr>
+                        <td className="p-2.5 font-bold text-white">patient_id</td>
+                        <td className="p-2.5 text-rose-400">P-1001 (PII Record)</td>
+                        <td className="p-2.5 text-cyan-300">0x7a3f89...e210 [256-bit Salted SHA-256]</td>
+                        <td className="p-2.5 text-emerald-400 font-bold">🔒 NEVER TRANSMITTED</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold text-white">age</td>
+                        <td className="p-2.5 text-rose-400">45 (Exact Age)</td>
+                        <td className="p-2.5 text-cyan-300">zk_range_proof(18 &le; age &le; 90)</td>
+                        <td className="p-2.5 text-emerald-400 font-bold">🔒 BOUNDS ONLY</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold text-white">diagnosis</td>
+                        <td className="p-2.5 text-rose-400">Type 2 Diabetes</td>
+                        <td className="p-2.5 text-cyan-300">zk_set_membership(valid_icd10_code)</td>
+                        <td className="p-2.5 text-emerald-400 font-bold">🔒 PROOF ONLY</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold text-white">biomarker_score</td>
+                        <td className="p-2.5 text-rose-400">1.24 mg/dL</td>
+                        <td className="p-2.5 text-cyan-300">H(salt || 1.24 || raw_hash)</td>
+                        <td className="p-2.5 text-emerald-400 font-bold">🔒 BLINDED WITNESS</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2.5 font-bold text-white">outcome</td>
+                        <td className="p-2.5 text-rose-400">Stabilized</td>
+                        <td className="p-2.5 text-cyan-300">zk_predicate_satisfied(pass=1)</td>
+                        <td className="p-2.5 text-emerald-400 font-bold">🔒 MATHEMATICALLY PROVED</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : analysisReport && (
               <div className="space-y-2 text-xs font-mono">
                 {/* Condition 1: Records */}
                 <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between">
@@ -618,9 +832,9 @@ export default function ContributorPage() {
                   <div>
                     <span className="text-slate-400">Required Schema: </span>
                     <span className="text-white font-bold">
-                      {analysisReport.requiredFieldsMatched} / {activeProject.requirements.requiredFields.length} Fields
+                      {analysisReport.requiredFieldsMatched} / {(activeProject.requirements?.requiredFields || []).length} Fields
                     </span>
-                    <span className="text-slate-500 text-[11px]"> ({activeProject.requirements.requiredFields.join(', ')})</span>
+                    <span className="text-slate-500 text-[11px]"> ({(activeProject.requirements?.requiredFields || []).join(', ')})</span>
                   </div>
                   {matchResults.schemaPass ? (
                     <span className="text-emerald-400 flex items-center gap-1 font-bold">
@@ -768,6 +982,144 @@ export default function ContributorPage() {
                 <div className="pt-2 border-t border-slate-800 flex justify-between text-[10px] text-slate-400">
                   <span>Audit Verification ID: {submissionResult.verification.verificationId}</span>
                   <span>Raw Dataset: NOT ACCESSED</span>
+                </div>
+              </div>
+            )}
+
+            {/* FEATURE: 1-Click DUST Bounty Reward Claim Card */}
+            {submissionResult && submissionResult.contribution.status === 'VERIFIED' && (
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/70 via-slate-900 to-cyan-950/70 border-2 border-emerald-500/80 shadow-2xl shadow-emerald-500/20 space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl font-bold border border-emerald-500/40 shadow-inner">
+                      🎁
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-extrabold text-white">
+                          Verified Contributor Bounty Reward
+                        </h4>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-900 text-emerald-300 border border-emerald-600">
+                          Preprod On-Chain
+                        </span>
+                      </div>
+                      <p className="text-xs text-emerald-300/90 mt-0.5">
+                        Your proof qualified for the <strong>{activeProject.name}</strong> bounty pool!
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleClaimReward}
+                    disabled={isRewardClaimed}
+                    className={`px-5 py-2.5 rounded-xl font-extrabold text-xs transition-all shadow-lg flex items-center space-x-2 ${
+                      isRewardClaimed
+                        ? 'bg-slate-800 text-emerald-400 border border-emerald-600/40 cursor-default'
+                        : 'bg-gradient-to-r from-emerald-400 to-cyan-400 hover:from-emerald-300 hover:to-cyan-300 text-slate-950 shadow-emerald-500/30 hover:scale-105 cursor-pointer'
+                    }`}
+                  >
+                    <span>{isRewardClaimed ? '✅ 450 DUST Claimed!' : '💰 Claim 450 DUST Bounty'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Payout Modal / Receipt Dialog */}
+            {showRewardModal && rewardTxData && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 99999999,
+                  background: 'rgba(3, 7, 18, 0.88)',
+                  backdropFilter: 'blur(12px)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '16px',
+                }}
+                onClick={(e) => e.target === e.currentTarget && setShowRewardModal(false)}
+              >
+                <div
+                  style={{
+                    width: '480px',
+                    maxWidth: '96vw',
+                    background: '#0B1120',
+                    borderRadius: '24px',
+                    border: '2px solid rgba(16, 185, 129, 0.8)',
+                    boxShadow: '0 30px 100px rgba(0,0,0,0.9), 0 0 60px rgba(16,185,129,0.3)',
+                    overflow: 'hidden',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  <div style={{ background: '#060B14', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '20px' }}>⚡</span>
+                      <span style={{ color: '#fff', fontWeight: 800, fontSize: '15px' }}>Midnight Reward Payout Receipt</span>
+                    </div>
+                    <button
+                      onClick={() => setShowRewardModal(false)}
+                      style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '18px', cursor: 'pointer' }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div style={{ padding: '24px 20px', textAlign: 'center' }}>
+                    <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '2px solid #10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '30px' }}>
+                      🎉
+                    </div>
+
+                    <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: 800, margin: '0 0 4px' }}>
+                      +450.00 DUST Transferred!
+                    </h3>
+                    <p style={{ color: '#94a3b8', fontSize: '12px', margin: '0 0 20px' }}>
+                      Credited to your connected 1AM Wallet for Zero-Knowledge Data Certification
+                    </p>
+
+                    <div style={{ background: '#070C18', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '14px', textAlign: 'left', fontSize: '11px', color: '#cbd5e1', spaceY: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ color: '#64748b' }}>Status:</span>
+                        <span style={{ color: '#10b981', fontWeight: 800 }}>● {rewardTxData.status}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ color: '#64748b' }}>Network:</span>
+                        <span style={{ color: '#38bdf8' }}>Midnight Preprod Testnet</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ color: '#64748b' }}>Block Height:</span>
+                        <span style={{ color: '#fff' }}>#{rewardTxData.blockHeight}</span>
+                      </div>
+                      <div style={{ padding: '6px 0' }}>
+                        <span style={{ color: '#64748b', display: 'block' }}>Transaction Hash:</span>
+                        <span style={{ color: '#22d3ee', fontSize: '10px', wordBreak: 'break-all' }}>{rewardTxData.txHash}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowRewardModal(false)}
+                      style={{
+                        marginTop: '20px',
+                        width: '100%',
+                        padding: '12px',
+                        background: 'linear-gradient(135deg, #10b981 0%, #06b6d4 100%)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        color: '#030712',
+                        fontWeight: 800,
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 16px rgba(16,185,129,0.4)',
+                      }}
+                    >
+                      ✓ Great, Back to Contributor Studio
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

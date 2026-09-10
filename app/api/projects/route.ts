@@ -46,7 +46,11 @@ export async function POST(req: Request) {
       rewardPool: rewardPool || '25,000 DUST / $15,000',
       status: 'ACTIVE',
       currentVersion: version,
-      requirements: policy.requirements,
+      requirements: {
+        ...policy.requirements,
+        allowedFormats: policy.requirements.requiredFormat || requirements.allowedFormats || ['CSV', 'JSON'],
+        requiredFields: policy.requirements.requiredFields || ['age', 'gender', 'diagnosis', 'treatment', 'outcome'],
+      },
       stats: {
         contributionsCount: 0,
         verifiedCount: 0,
