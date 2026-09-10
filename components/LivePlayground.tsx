@@ -87,13 +87,13 @@ export default function LivePlayground() {
               <Zap className="w-3.5 h-3.5 fill-current" />
               10-SECOND INSTANT DEMO SANDBOX
             </span>
-            <span className="text-xs text-slate-400 font-mono">काय करायचं ते समजत नाही? फक्त खालील बटण दाबा!</span>
+            <span className="text-xs text-slate-400 font-mono">Select a synthetic dataset and run instant verification:</span>
           </div>
           <h3 className="text-xl font-bold text-white tracking-tight mt-1">
             Try Zero-Knowledge Verification in 1 Click
           </h3>
           <p className="text-xs text-slate-300 mt-0.5">
-            खालीलपैकी एक डेटासेट निवडा आणि <strong className="text-cyan-400">&ldquo;Run 1-Click ZK Demo&rdquo;</strong> दाबा. तुम्हाला संपूर्ण प्रोसेस डोळ्यांसमोर दिसेल!
+            Choose a dataset below and click <strong className="text-cyan-400">&ldquo;Run 1-Click ZK Demo&rdquo;</strong> to witness full client-side privacy proof generation.
           </p>
         </div>
 
@@ -125,11 +125,11 @@ export default function LivePlayground() {
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-white">Dataset A (Valid)</span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
-              पास होतो ✓
+              QUALIFIED ✓
             </span>
           </div>
           <p className="text-[11px] text-slate-400">
-            50k रेकॉर्ड्स, 98% completeness &rarr; AI प्रोजेक्टसाठी परिपूर्ण.
+            50,000 records, 98.0% completeness &rarr; Meets all AI criteria.
           </p>
         </button>
 
@@ -148,11 +148,11 @@ export default function LivePlayground() {
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-white">Dataset B (Low Quality)</span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-rose-950 text-rose-400 border border-rose-800">
-              फेल होतो ✗
+              REJECTED ✗
             </span>
           </div>
           <p className="text-[11px] text-slate-400">
-            81% completeness, 8% डुप्लिकेट्स &rarr; ZK रिजेक्ट करेल.
+            81.0% completeness, 8% duplicates &rarr; Fails ZK constraints.
           </p>
         </button>
 
@@ -171,11 +171,11 @@ export default function LivePlayground() {
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-white">Dataset C (Low Volume)</span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800">
-              फेल होतो ✗
+              REJECTED ✗
             </span>
           </div>
           <p className="text-[11px] text-slate-400">
-            फक्त 4,500 रेकॉर्ड्स (&lt; 10,000 required) &rarr; व्हॉल्युम कमी आहे.
+            Only 4,500 records (&lt; 10,000 required) &rarr; Insufficient volume.
           </p>
         </button>
       </div>
@@ -191,7 +191,7 @@ export default function LivePlayground() {
           {isRunning ? (
             <>
               <RefreshCw className="w-4 h-4 animate-spin" />
-              <span>प्रूफ बनत आहे (Evaluating ZK Circuit)...</span>
+              <span>Generating Proof (Evaluating ZK Circuit)...</span>
             </>
           ) : (
             <>
@@ -203,7 +203,7 @@ export default function LivePlayground() {
 
         <div className="text-xs text-slate-400 font-mono flex items-center gap-2">
           <Lock className="w-3.5 h-3.5 text-emerald-400" />
-          <span>कच्चा डेटा कधीही बाहेर पाठवला जात नाही (100% Client-Side ZK)</span>
+          <span>Zero Raw Data Transmitted (100% Client-Side ZK Privacy)</span>
         </div>
       </div>
 
@@ -234,15 +234,26 @@ export default function LivePlayground() {
           </div>
 
           {step === 4 && (
-            <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px]">
+            <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[11px]">
               <div className="text-slate-400">
                 Midnight Ledger: <span className="text-cyan-400 font-bold">0x9a8f4c2b1e7d...</span>
               </div>
-              <div className="text-emerald-400 font-bold flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                {selectedDataset === 'A'
-                  ? 'AI डेव्हलपरला खात्री मिळाली, पण तुमचा डेटा सुरक्षित राहिला!'
-                  : 'खराब डेटा ZK द्वारे आपोआप रिजेक्ट झाला!'}
+              <div className="flex items-center gap-3">
+                <div className="text-emerald-400 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {selectedDataset === 'A'
+                    ? 'AI Developer verified ZK proof! (450 DUST Bounty Eligible)'
+                    : 'Unqualified dataset automatically rejected by ZK circuit!'}
+                </div>
+                {selectedDataset === 'A' && (
+                  <a
+                    href="/contributor"
+                    className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-400 to-cyan-400 text-slate-950 font-bold text-xs hover:scale-105 transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1"
+                  >
+                    <span>💰 Go to Contributor &amp; Submit</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </a>
+                )}
               </div>
             </div>
           )}
