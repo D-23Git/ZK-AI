@@ -8,9 +8,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --loader ts-node/esm --test tests/**/*.test.ts || node tests/runner.js"
+    "test": "node tests/runner.js"
   },
   "dependencies": {
+    "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@midnight-ntwrk/ledger": "^4.0.0",
+    "@midnight-ntwrk/midnight-js": "^4.1.1",
+    "@midnight-ntwrk/wallet-api": "^5.0.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "lucide-react": "^0.453.0",
