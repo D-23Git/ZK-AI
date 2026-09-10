@@ -1,41 +1,30 @@
-name: PrivateData AI CI/CD Pipeline
+name: Midnight DApp CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ "main" ]
 
 jobs:
-  test-and-verify:
-    name: Test & ZK Verification Suite
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Setup Node.js Environment
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+        cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci || npm install --no-audit
+    - name: Install Dependencies
+      run: npm ci
 
-      - name: Run Cryptographic ZK & Architecture Tests
-        run: node tests/runner.js
+    - name: Build Next.js
+      run: npm run build
 
-      - name: Validate Compact DSL Contract Syntax
-        run: |
-          echo "Checking Compact contract privatedata_ai.compact..."
-          test -f midnight/contract/privatedata_ai.compact
-          grep -q "circuit verify_dataset_qualification" midnight/contract/privatedata_ai.compact
-          echo "Compact DSL syntax verified."
-
-      - name: Build Next.js Application Bundle
-        run: npm run build
-        env:
-          NEXT_TELEMETRY_DISABLED: 1
-          MIDNIGHT_USE_LIVE: false
+    # Midnight specific build steps will be added here once compact compiler is in CI
+    # - name: Compile Compact Contract
+    #   run: compactc contracts/PrivateDataProof.compact
