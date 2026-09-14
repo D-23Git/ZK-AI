@@ -12,7 +12,7 @@ PrivateData AI is a privacy-first AI dataset contribution platform built on the 
 ## 🔗 Submission Links
 - **X (Twitter) Product Profile**: [https://x.com/YourProfileHere](https://x.com/YourProfileHere) *(TODO: Update with your link)*
 - **Demo Video**: [Link to Loom/YouTube](https://youtu.be/) *(TODO: Update with your video)*
-- **Live Demo (Preprod)**: [https://your-vercel-domain.vercel.app](https://your-vercel-domain.vercel.app) *(TODO: Update with deployed link)*
+- **Live Demo (Preprod)**: [https://zk-ai-iota.vercel.app/](https://zk-ai-iota.vercel.app/)
 - **Midnight Preprod Contract Address**: `0x_compact_contract_preprod_f7238c15de3` *(Note: Simulated address pending live node deployment)*
 
 ## 🚀 Setup Instructions
