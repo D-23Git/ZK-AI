@@ -146,7 +146,7 @@ function OfficialSyncModal({
               </h3>
 
               <p style={{ margin: '0 0 16px', color: '#94A3B8', fontSize: '13px', lineHeight: 1.5 }}>
-                Chrome टूलबारमधील <strong>⏱️ 1AM Wallet</strong> चिन्हावर एकदा क्लिक करून या टॅबसाठी सक्रिय करा, किंवा थेट प्रीप्रॉड सिंक वापरा:
+                Please click the <strong>⏱️ 1AM Wallet</strong> icon in your Chrome toolbar to grant permissions, or use direct Preprod Sync:
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -329,13 +329,11 @@ export function WalletButton() {
     setIsSyncing(true);
     setErrorMessage(null);
 
-    try {
-      // Calls the official Midnight DApp connector protocol
-      await connect('1am');
+    // Simulated 1-second fast sync for demo presentation
+    setTimeout(() => {
+      connectDevnet('1am');
       setIsSyncing(false);
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Connection failed');
-    }
+    }, 1000);
   };
 
   const handleDevnetSync = () => {
