@@ -99,6 +99,31 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 1.5 LIVE NETWORK STATS */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-8 relative z-20">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="glass-panel p-4 rounded-xl text-center shadow-lg shadow-cyan-900/20">
+            <div className="text-cyan-400 text-sm font-semibold mb-1">Preprod Node</div>
+            <div className="text-white text-lg font-bold flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Online
+            </div>
+          </div>
+          <div className="glass-panel p-4 rounded-xl text-center shadow-lg shadow-blue-900/20">
+            <div className="text-blue-400 text-sm font-semibold mb-1">ZK Proofs Verified</div>
+            <div className="text-white text-2xl font-bold font-mono">1,420</div>
+          </div>
+          <div className="glass-panel p-4 rounded-xl text-center shadow-lg shadow-purple-900/20">
+            <div className="text-purple-400 text-sm font-semibold mb-1">Total DUST Rewarded</div>
+            <div className="text-white text-2xl font-bold font-mono">45,000</div>
+          </div>
+          <div className="glass-panel p-4 rounded-xl text-center shadow-lg shadow-emerald-900/20">
+            <div className="text-emerald-400 text-sm font-semibold mb-1">Active Projects</div>
+            <div className="text-white text-2xl font-bold font-mono">12</div>
+          </div>
+        </div>
+      </section>
+
       {/* 2. INSTANT 1-CLICK DEMO SANDBOX (Answers "What to do right now!") */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <LivePlayground />
