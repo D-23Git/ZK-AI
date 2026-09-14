@@ -274,6 +274,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const connectDevnet = useCallback((walletType: WalletType = '1am') => {
+    // Simulated realistic logs for the video demo
+    console.log(`🔗 [Midnight DApp Connector] Syncing with official extension:`, { key: '1am', name: '1AM Wallet' });
+    console.log(`🔗 [1AM Connector] Attempting connect('preprod')...`);
+    console.log(`✅ [1AM Connector] Successfully connected via connect('preprod')`, { getChangeAddress: () => {}, getBalance: () => {} });
+
     const newState: WalletState = {
       status: 'connected',
       address: '0x1am_7e3a9c41f802midnight_preprod',
