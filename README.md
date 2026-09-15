@@ -9,6 +9,13 @@ PrivateData AI is a privacy-first AI dataset contribution platform built on the 
 - **DUST Bounty System**: Rewards contributors upon verified proofs.
 - **CI/CD Pipeline**: GitHub actions configured for automated testing and builds.
 
+## 📸 Screenshots
+
+### Web3 Contributor Dashboard
+![Web3 Contributor Dashboard](./public/docs/app-screenshot.png)
+
+### Automated CI/CD Pipeline
+![Automated CI/CD Pipeline](./public/docs/cicd-status.png)
 ## 🔗 Submission Links
 - **X (Twitter) Product Profile**: [https://x.com/Dbadhe23](https://x.com/Dbadhe23)
 - **Demo Video**: [Link to Loom/YouTube](https://youtu.be/) *(TODO: Update with your video)*
