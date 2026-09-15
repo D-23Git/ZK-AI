@@ -1,4 +1,4 @@
-# PrivateData AI 🛡️ - Midnight ZK Hackathon
+# PrivateData AI 🛡️ - Level 4
 
 PrivateData AI is a privacy-first AI dataset contribution platform built on the **Midnight Network**. It leverages Midnight's Zero-Knowledge Compact smart contracts to verify the quality and completeness of dataset contributions without ever exposing the raw dataset.
 
