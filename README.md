@@ -11,11 +11,17 @@ PrivateData AI is a privacy-first AI dataset contribution platform built on the 
 
 ## 📸 Screenshots
 
-### Web3 Contributor Dashboard
-![Web3 Contributor Dashboard](./public/docs/app-screenshot.png)
+### 1. Main Dashboard (Homepage) & Live Network Stats
+![Homepage Dashboard](./public/docs/homepage.png)
 
-### Automated CI/CD Pipeline
-![Automated CI/CD Pipeline](./public/docs/cicd-status.png)
+### 2. AI Developer Portal (Requirement Builder)
+![AI Developer Portal](./public/docs/developer.png)
+
+### 3. Data Contributor ZK Privacy Proof Generation
+![Contributor Dashboard](./public/docs/contributor.png)
+
+### 4. Automated CI/CD Pipeline (GitHub Actions)
+![Automated CI/CD Pipeline](./public/docs/cicd.png)
 ## 🔗 Submission Links
 - **X (Twitter) Product Profile**: [https://x.com/Dbadhe23](https://x.com/Dbadhe23)
 - **Demo Video**: [Link to Loom/YouTube](https://youtu.be/) *(TODO: Update with your video)*
