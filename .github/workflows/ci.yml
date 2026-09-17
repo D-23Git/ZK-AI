@@ -25,6 +25,9 @@ jobs:
     - name: Build Next.js
       run: npm run build
 
+    - name: Run Tests
+      run: npm run test
+
     # Midnight specific build steps will be added here once compact compiler is in CI
     # - name: Compile Compact Contract
     #   run: compactc contracts/PrivateDataProof.compact
