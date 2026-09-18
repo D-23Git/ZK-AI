@@ -24,7 +24,7 @@ PrivateData AI is a privacy-first AI dataset contribution platform built on the 
 ### 4. Automated CI/CD Pipeline (GitHub Actions)
 ![Automated CI/CD Pipeline](./public/docs/cicd.png)
 ## 🔗 Submission Links
-- **X (Twitter) Product Profile**: [https://x.com/PrivateDataAI](https://x.com/PrivateDataAI)
+- **X (Twitter) Product Profile**: [https://x.com/Dbadhe23](https://x.com/Dbadhe23)
 - **Demo Video**: [Link to Loom/YouTube](https://youtu.be/) *(TODO: Update with your video)*
 - **Live Demo (Preprod)**: [https://zk-ai-iota.vercel.app/](https://zk-ai-iota.vercel.app/)
 - **Midnight Preprod Contract Address**: `0x7a3F9B8b4931aFfC20E15D39eA132b9A492f2C68` *(Deployed on Preprod)*
