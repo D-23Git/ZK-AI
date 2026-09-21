@@ -337,10 +337,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!api) throw new Error('API not available');
 
       if (typeof api.signData === 'function') {
+        const hexPayload = Buffer.from(payload).toString('hex');
         const formats = [
+          // 1AM specific object payload (no address arg)
+          [{ data: payload, options: { encoding: 'text' } }],
+          [{ data: hexPayload, options: { encoding: 'hex' } }],
+          // CIP-30 / other standard payload with address arg
           [state.address || '', { data: payload, options: { encoding: 'text' } }],
+          [state.address || '', { data: hexPayload, options: { encoding: 'hex' } }],
           [state.address || '', payload],
-          [state.address || '', Buffer.from(payload).toString('hex')]
+          [state.address || '', hexPayload],
+          // Generic two arg
+          [payload, { encoding: 'text' }],
+          [hexPayload, { encoding: 'hex' }]
         ];
         
         let success = false;
