@@ -353,9 +353,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!api) throw new Error('API not available');
 
       if (typeof api.signData === 'function') {
-        // The 1AM Wallet DApp Connector injected script expects: signData(address, payloadObject)
-        // where payloadObject is { data: string, options: { encoding: 'text' | 'hex' | 'base64' } }
-        await api.signData(state.address || '', { 
+        // The 1AM Wallet DApp Connector expects a single object for signData
+        await api.signData({ 
           data: payload, 
           options: { encoding: 'text' } 
         });
