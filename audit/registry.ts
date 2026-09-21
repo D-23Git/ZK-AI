@@ -94,7 +94,7 @@ export class AuditRegistry {
       verificationId: 'ver-a189f4b73210',
       contributionId: 'DC-1024',
       projectId: 'AI-PROJECT-001',
-      contributorId: 'contrib-001',
+      contributorId: 'mn_addr_preprod1q4cxj3m8nv...9hfsdfx8',
       requirementVersion: '1.0',
       requirementPolicyHash: '7b2a9f14c8e3d09a25b84e1160a2b97c413e1f5798da2bf56e2978931b238d10',
       proofStatus: 'VERIFIED_VALID',
@@ -111,7 +111,7 @@ export class AuditRegistry {
       verificationId: 'ver-c89201f92e34',
       contributionId: 'DC-1023',
       projectId: 'AI-PROJECT-001',
-      contributorId: 'contrib-002',
+      contributorId: 'mn_addr_preprod1z8k2l0pw9q...v8xj45k1',
       requirementVersion: '1.0',
       requirementPolicyHash: '7b2a9f14c8e3d09a25b84e1160a2b97c413e1f5798da2bf56e2978931b238d10',
       proofStatus: 'VERIFIED_REJECTED',
@@ -120,6 +120,57 @@ export class AuditRegistry {
       proofReference: 'zk-proof-10928bf347ad',
       datasetCommitment: '3d87f9104c2b9a8f7e615024acb1e987f2305612847a9cb021e87d45f3192084',
       satisfiedRequirementsCount: 3,
+      totalRequirementsCount: 6,
+      network: 'MIDNIGHT_PREPROD'
+    });
+
+    this.logVerification({
+      verificationId: 'ver-b749d8c32f11',
+      contributionId: 'DC-1025',
+      projectId: 'AI-PROJECT-003',
+      contributorId: 'mn_addr_preprod1m5qxl8s2tj...1k9dp7z2',
+      requirementVersion: '2.1',
+      requirementPolicyHash: '1a9f8e7d6c5b4a3928172635445362718091a2b3c4d5e6f7a8b9c0d1e2f3a4b5',
+      proofStatus: 'VERIFIED_VALID',
+      timestamp: Date.now() - 1000 * 60 * 60 * 6, // 6 hours ago
+      verifier: 'Midnight Preprod Validator (0x9a8f4c2b...)',
+      proofReference: 'zk-proof-9d82a1c4e5b6',
+      datasetCommitment: '4c5b6a7988091a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b',
+      satisfiedRequirementsCount: 6,
+      totalRequirementsCount: 6,
+      network: 'MIDNIGHT_PREPROD'
+    });
+
+    this.logVerification({
+      verificationId: 'ver-e91823a4c5b6',
+      contributionId: 'DC-1026',
+      projectId: 'AI-PROJECT-001',
+      contributorId: 'mn_addr_preprod1t3v8x9k2l0...p9q8r7s6',
+      requirementVersion: '1.0',
+      requirementPolicyHash: '7b2a9f14c8e3d09a25b84e1160a2b97c413e1f5798da2bf56e2978931b238d10',
+      proofStatus: 'VERIFIED_VALID',
+      timestamp: Date.now() - 1000 * 60 * 60 * 6.5, // 6.5 hours ago
+      verifier: 'Midnight Compact Engine (0x9a8f4c2b...)',
+      proofReference: 'zk-proof-3e4f5a6b7c8d',
+      datasetCommitment: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b',
+      satisfiedRequirementsCount: 6,
+      totalRequirementsCount: 6,
+      network: 'MIDNIGHT_PREPROD'
+    });
+
+    this.logVerification({
+      verificationId: 'ver-a1b2c3d4e5f6',
+      contributionId: 'DC-1027',
+      projectId: 'AI-PROJECT-002',
+      contributorId: 'mn_addr_preprod1n2p3q4r5s6...t7u8v9w0',
+      requirementVersion: '1.1',
+      requirementPolicyHash: 'e49a8f102c9b7d3419087521abf089274c3e5912a784d0b138e652a91f34b870',
+      proofStatus: 'VERIFIED_REJECTED',
+      timestamp: Date.now() - 1000 * 60 * 60 * 7, // 7 hours ago
+      verifier: 'Midnight Preprod Validator (0x9a8f4c2b...)',
+      proofReference: 'zk-proof-5f6e7d8c9b0a',
+      datasetCommitment: 'b9a8f7e6d5c4b3a2109876543210abcdef0123456789abcdef0123456789abcd',
+      satisfiedRequirementsCount: 4,
       totalRequirementsCount: 6,
       network: 'MIDNIGHT_PREPROD'
     });
