@@ -211,6 +211,7 @@ export default function AuditorPage() {
               <tr>
                 <th className="py-3 px-3">Verification ID</th>
                 <th className="py-3 px-3">Contribution ID</th>
+                <th className="py-3 px-3">Contributor Address</th>
                 <th className="py-3 px-3">Project ID</th>
                 <th className="py-3 px-3">Req Version</th>
                 <th className="py-3 px-3">Proof Status</th>
@@ -224,6 +225,9 @@ export default function AuditorPage() {
                 <tr key={item.verificationId} className="hover:bg-slate-800/30 transition-colors">
                   <td className="py-3 px-3 font-semibold text-purple-400">{item.verificationId}</td>
                   <td className="py-3 px-3 text-cyan-400">#{item.contributionId}</td>
+                  <td className="py-3 px-3 text-emerald-400 truncate max-w-[120px]" title={item.contributorId || 'N/A'}>
+                    {item.contributorId || 'N/A'}
+                  </td>
                   <td className="py-3 px-3 text-slate-300">{item.projectId}</td>
                   <td className="py-3 px-3">
                     <span className="px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">

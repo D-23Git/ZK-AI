@@ -315,7 +315,7 @@ export default function ContributorPage() {
           projectId: activeProject.id,
           requirementVersion: activeProject.currentVersion || '1.0',
           requirementsHash,
-          contributorId: 'contrib-001',
+          contributorId: address || 'wallet-not-connected',
           datasetCommitment,
           nonce: Math.random().toString(36).substring(2, 12),
           timestamp: Date.now()

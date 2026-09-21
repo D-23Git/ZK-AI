@@ -92,6 +92,7 @@ export async function POST(req: Request) {
       verificationId: verification.verificationId,
       contributionId,
       projectId,
+      contributorId: proof.publicInputs.contributorId || 'wallet-not-connected',
       requirementVersion: proof.publicInputs.requirementVersion,
       requirementPolicyHash: proof.publicInputs.requirementsHash,
       proofStatus: isValid ? 'VERIFIED_VALID' : 'VERIFIED_REJECTED',

@@ -12,6 +12,7 @@ export interface AuditRecord {
   projectId: string;
   requirementVersion: string;
   requirementPolicyHash: string;
+  contributorId: string;
   proofStatus: 'VERIFIED_VALID' | 'VERIFIED_REJECTED' | 'INVALID_PROOF';
   timestamp: number;
   verifier: string; // e.g. "Midnight Preprod Contract 0x9a8f..." or "Devnet Verifier"
