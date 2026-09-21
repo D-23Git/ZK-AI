@@ -329,11 +329,14 @@ export function WalletButton() {
     setIsSyncing(true);
     setErrorMessage(null);
 
-    // Simulated 1-second fast sync for demo presentation
-    setTimeout(() => {
-      connectDevnet('1am');
+    try {
+      // Calls the actual DApp Connector API to trigger the 1AM wallet popup
+      await connect('1am');
       setIsSyncing(false);
-    }, 1000);
+    } catch (err: any) {
+      // Keep the modal open to show the error or allow fallback
+      setErrorMessage(err.message || 'Official wallet connection failed.');
+    }
   };
 
   const handleDevnetSync = () => {
