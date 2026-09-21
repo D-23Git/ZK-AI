@@ -130,13 +130,19 @@ export class AIDatasetAnalyzer {
     const consistencyScore = totalCells > 0 ? Math.max(0, Math.min(100, Math.round(100 - (typeMismatches / totalCells) * 200))) : 100;
 
     // 6. Overall Quality Score Algorithm (Weighted composite)
-    // HACKATHON DEMO OVERRIDE: Ensure all datasets pass the strict Midnight ZK criteria
-    const hackCompleteness = Math.max(completeness, 99.9);
-    const hackDuplicateRate = Math.min(duplicateRate, 0.5);
-    const hackSchemaCompliance = 100;
-    matchedCount = requiredFields.length;
-    
-    const overallQuality = 99;
+    // 40% Completeness + 25% Schema + 20% Uniqueness (100 - Dup) + 15% Consistency
+    const overallQuality = Math.min(
+      100,
+      Math.max(
+        0,
+        Math.round(
+          completeness * 0.40 +
+          schemaCompliance * 0.25 +
+          (100 - duplicateRate) * 0.20 +
+          consistencyScore * 0.15
+        )
+      )
+    );
 
     // 7. Domain Category Classification
     const category = this.classifyDomain(detectedFields, rows);
@@ -151,11 +157,11 @@ export class AIDatasetAnalyzer {
     return {
       id: 'rep-' + Math.random().toString(36).substring(2, 9),
       datasetName: input.name,
-      recordCount: totalRecords < 1000 ? 50000 : totalRecords,
-      completeness: hackCompleteness,
-      missingValueRate: Number((100 - hackCompleteness).toFixed(1)),
-      duplicateRate: hackDuplicateRate,
-      schemaCompliance: hackSchemaCompliance,
+      recordCount: totalRecords,
+      completeness,
+      missingValueRate,
+      duplicateRate,
+      schemaCompliance,
       requiredFieldsMatched: matchedCount,
       requiredFieldsTotal: requiredFields.length,
       overallQuality,
@@ -185,23 +191,33 @@ export class AIDatasetAnalyzer {
       if (lowerDetected.has(rf.toLowerCase().trim())) matchedCount++;
     }
 
-    const hackCompleteness = Math.max(summary.completeness, 99.9);
-    const hackDuplicateRate = Math.min(summary.duplicateRate, 0.5);
-    const hackSchemaCompliance = 100;
-    matchedCount = requiredFields.length;
-    
-    const overallQuality = 99;
+    const schemaCompliance = requiredFields.length > 0
+      ? Number(((matchedCount / requiredFields.length) * 100).toFixed(1))
+      : 100;
+
+    const overallQuality = Math.min(
+      100,
+      Math.max(
+        0,
+        Math.round(
+          summary.completeness * 0.40 +
+          schemaCompliance * 0.25 +
+          (100 - summary.duplicateRate) * 0.20 +
+          95 * 0.15
+        )
+      )
+    );
 
     const category = (summary.category as any) || 'Healthcare';
 
     return {
       id: 'rep-' + Math.random().toString(36).substring(2, 9),
       datasetName: name,
-      recordCount: summary.recordCount < 1000 ? 50000 : summary.recordCount,
-      completeness: hackCompleteness,
-      missingValueRate: Number((100 - hackCompleteness).toFixed(1)),
-      duplicateRate: hackDuplicateRate,
-      schemaCompliance: hackSchemaCompliance,
+      recordCount: summary.recordCount,
+      completeness: summary.completeness,
+      missingValueRate: Number((100 - summary.completeness).toFixed(1)),
+      duplicateRate: summary.duplicateRate,
+      schemaCompliance,
       requiredFieldsMatched: matchedCount,
       requiredFieldsTotal: requiredFields.length,
       overallQuality,
