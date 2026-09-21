@@ -214,11 +214,27 @@ async function syncOfficialMidnightExtension(networkId: string = 'preprod'): Pro
   let balance = '0 DUST';
   try {
     const extractBal = (res: any) => {
-      if (typeof res === 'object') return res?.balance || res?.amount || res?.value || res?.unshielded || '0';
+      if (!res) return '0';
+      if (typeof res === 'object') {
+        // Find any number-like property
+        const val = res.balance || res.amount || res.value || res.unshielded || Object.values(res).find(v => typeof v === 'number' || (typeof v === 'string' && !isNaN(Number(v)))) || '0';
+        // If it's a huge number, it's likely in lovelace/smallest unit (6 decimals)
+        const numVal = Number(val);
+        if (!isNaN(numVal) && numVal > 1000000) {
+           return (numVal / 1000000).toFixed(2);
+        }
+        return String(val);
+      }
+      const numRes = Number(res);
+      if (!isNaN(numRes) && numRes > 1000000) {
+         return (numRes / 1000000).toFixed(2);
+      }
       return String(res);
     };
 
-    if (typeof api.getDustBalance === 'function') {
+    if (typeof api.getUnshieldedBalances === 'function') {
+      balance = `${extractBal(await api.getUnshieldedBalances())} DUST`;
+    } else if (typeof api.getDustBalance === 'function') {
       balance = `${extractBal(await api.getDustBalance())} DUST`;
     } else if (typeof api.getBalance === 'function') {
       balance = `${extractBal(await api.getBalance())} DUST`;
