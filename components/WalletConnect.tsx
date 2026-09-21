@@ -329,19 +329,12 @@ export function WalletButton() {
     setIsSyncing(true);
     setErrorMessage(null);
 
-    // Keep the syncing modal visible for at least 1.5 seconds for demo video purposes
-    const startTime = Date.now();
     try {
       await connect('1am');
     } catch (err: any) {
       setErrorMessage(err.message || 'Official wallet connection failed.');
     } finally {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 1500) {
-        setTimeout(() => setIsSyncing(false), 1500 - elapsed);
-      } else {
-        setIsSyncing(false);
-      }
+      setIsSyncing(false);
     }
   };
 

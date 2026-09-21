@@ -202,8 +202,8 @@ async function syncOfficialMidnightExtension(networkId: string = 'preprod'): Pro
     console.warn('Address fetch error:', e);
   }
 
-  if (!address || typeof address !== 'string' || address.trim() === '' || address.includes('{') || address.includes('object') || address.length < 20) {
-    address = '0x1am_preprod_' + Math.random().toString(16).substring(2, 10) + 'ab9f20cd3';
+  if (!address || typeof address !== 'string' || address.trim() === '' || address.includes('{') || address.includes('object') || address.length < 10) {
+    throw new Error('Official wallet connected, but the extension returned an invalid or empty address.');
   }
 
   let balance = '0 DUST';
@@ -336,18 +336,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       } else if (typeof api.signMessage === 'function') {
         await api.signMessage(state.address || '', payload);
       } else {
-        console.warn('signData not available on this wallet version, fallback to connection popup');
-        const userApproved = window.confirm(`[1AM Wallet Extension Simulation]\n\nSignature Request:\n${payload}\n\nApprove this transaction?`);
-        if (!userApproved) throw new Error('User rejected signature');
+        throw new Error('signData API is not supported by your current 1AM wallet extension version.');
       }
     } catch (e: any) {
       console.warn('Signature rejected or failed', e);
-      if (e?.message && e.message.includes('not available')) {
-        const userApproved = window.confirm(`[1AM Wallet Extension Simulation]\n\nSignature Request:\n${payload}\n\nApprove this transaction?`);
-        if (!userApproved) throw new Error('User rejected signature');
-      } else {
-        throw e;
-      }
+      throw e;
     }
   }, [state.address]);
 
