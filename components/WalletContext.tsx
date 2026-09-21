@@ -353,10 +353,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!api) throw new Error('API not available');
 
       if (typeof api.signData === 'function') {
-        // The 1AM Wallet DApp Connector injected script expects THREE arguments:
-        // signData(address, dataString, optionsObject)
+        // The 1AM Wallet DApp Connector injected script expects TWO arguments:
+        // signData(dataString, optionsObject)
         await api.signData(
-          state.address || '', 
           payload, 
           { encoding: 'text' }
         );
