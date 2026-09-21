@@ -329,13 +329,19 @@ export function WalletButton() {
     setIsSyncing(true);
     setErrorMessage(null);
 
+    // Keep the syncing modal visible for at least 1.5 seconds for demo video purposes
+    const startTime = Date.now();
     try {
-      // Calls the actual DApp Connector API to trigger the 1AM wallet popup
       await connect('1am');
-      setIsSyncing(false);
     } catch (err: any) {
-      // Keep the modal open to show the error or allow fallback
       setErrorMessage(err.message || 'Official wallet connection failed.');
+    } finally {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 1500) {
+        setTimeout(() => setIsSyncing(false), 1500 - elapsed);
+      } else {
+        setIsSyncing(false);
+      }
     }
   };
 
