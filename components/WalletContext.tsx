@@ -353,11 +353,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!api) throw new Error('API not available');
 
       if (typeof api.signData === 'function') {
-        // The 1AM Wallet DApp Connector expects a single object for signData
-        await api.signData({ 
-          data: payload, 
-          options: { encoding: 'text' } 
-        });
+        // The 1AM Wallet DApp Connector injected script expects THREE arguments:
+        // signData(address, dataString, optionsObject)
+        await api.signData(
+          state.address || '', 
+          payload, 
+          { encoding: 'text' }
+        );
       } else if (typeof api.signMessage === 'function') {
         await api.signMessage(state.address || '', payload);
       } else {
