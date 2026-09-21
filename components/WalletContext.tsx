@@ -181,26 +181,28 @@ async function syncOfficialMidnightExtension(networkId: string = 'preprod'): Pro
   // 4. Retrieve real synchronized data
   let address = '';
   try {
-    const extractAddr = (res: any) => {
-      if (Array.isArray(res)) return typeof res[0] === 'string' ? res[0] : (res[0]?.address || res[0]?.id || JSON.stringify(res[0]));
-      if (typeof res === 'object' && res !== null) {
-         if (res[0] && typeof res[0] === 'string') return res[0];
-         return res.address || res.id || Object.values(res).find(v => typeof v === 'string' && v.length > 10) || JSON.stringify(res);
+    let allPossibleAddresses: string[] = [];
+    const extractAllAddrs = (res: any) => {
+      if (!res) return;
+      if (typeof res === 'string') allPossibleAddresses.push(res);
+      else if (Array.isArray(res)) res.forEach(r => { if (typeof r === 'string') allPossibleAddresses.push(r); else extractAllAddrs(r); });
+      else if (typeof res === 'object') {
+        Object.values(res).forEach(v => {
+          if (typeof v === 'string' && v.length > 15) allPossibleAddresses.push(v);
+        });
       }
-      return String(res);
     };
 
-    if (typeof api.getUnshieldedAddresses === 'function') {
-      address = extractAddr(await api.getUnshieldedAddresses());
-    } else if (typeof api.getShieldedAddresses === 'function') {
-      address = extractAddr(await api.getShieldedAddresses());
-    } else if (typeof api.getChangeAddress === 'function') {
-      address = extractAddr(await api.getChangeAddress());
-    } else if (typeof api.getUsedAddresses === 'function') {
-      address = extractAddr(await api.getUsedAddresses());
-    } else if (typeof api.getAddress === 'function') {
-      address = extractAddr(await api.getAddress());
+    const methods = ['getUnshieldedAddresses', 'getUnshieldedAddress', 'getChangeAddress', 'getUsedAddresses', 'getAddress', 'state', 'getShieldedAddresses'];
+    for (const m of methods) {
+      if (typeof api[m] === 'function') {
+        try { extractAllAddrs(await api[m]()); } catch(e) {}
+      }
     }
+
+    address = allPossibleAddresses.find(a => a.startsWith('mn_addr_') || (a.length > 40 && !a.includes('shield'))) || 
+              allPossibleAddresses.find(a => a.length > 40) || 
+              '';
   } catch (e) {
     console.warn('Address fetch error:', e);
   }
