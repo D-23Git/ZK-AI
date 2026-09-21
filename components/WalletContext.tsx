@@ -181,47 +181,42 @@ async function syncOfficialMidnightExtension(networkId: string = 'preprod'): Pro
   // 4. Retrieve real synchronized data
   let address = '';
   try {
-    if (typeof api.getChangeAddress === 'function') {
-      address = await api.getChangeAddress();
-    } else if (typeof api.getUsedAddresses === 'function') {
-      const addrs = await api.getUsedAddresses();
-      address = Array.isArray(addrs) ? addrs[0] : addrs;
-    } else if (typeof api.getUnshieldedAddresses === 'function') {
-      const addrs = await api.getUnshieldedAddresses();
-      address = Array.isArray(addrs) ? addrs[0] : addrs;
+    const extractAddr = (res: any) => {
+      if (Array.isArray(res)) return typeof res[0] === 'string' ? res[0] : (res[0]?.address || res[0]?.id || JSON.stringify(res[0]));
+      if (typeof res === 'object') return res?.address || res?.id || JSON.stringify(res);
+      return String(res);
+    };
+
+    if (typeof api.getUnshieldedAddresses === 'function') {
+      address = extractAddr(await api.getUnshieldedAddresses());
     } else if (typeof api.getShieldedAddresses === 'function') {
-      const addrs = await api.getShieldedAddresses();
-      address = Array.isArray(addrs) ? addrs[0] : addrs;
+      address = extractAddr(await api.getShieldedAddresses());
+    } else if (typeof api.getChangeAddress === 'function') {
+      address = extractAddr(await api.getChangeAddress());
+    } else if (typeof api.getUsedAddresses === 'function') {
+      address = extractAddr(await api.getUsedAddresses());
     } else if (typeof api.getAddress === 'function') {
-      address = await api.getAddress();
-    } else if (typeof api.state === 'function') {
-      const st = await api.state();
-      address = st?.address || st?.addressHex || st?.shieldedAddress || st?.unshieldedAddress || '';
-    } else if (typeof api.getAccounts === 'function') {
-      const accs = await api.getAccounts();
-      if (Array.isArray(accs) && accs.length > 0) {
-        address = accs[0]?.address || accs[0] || '';
-      }
+      address = extractAddr(await api.getAddress());
     }
   } catch (e) {
     console.warn('Address fetch error:', e);
   }
 
-  if (!address || typeof address !== 'string' || address.trim() === '') {
+  if (!address || typeof address !== 'string' || address.trim() === '' || address.includes('object Object')) {
     address = '0x1am_preprod_' + Math.random().toString(16).substring(2, 10);
   }
 
   let balance = '0 DUST';
   try {
-    if (typeof api.getBalance === 'function') {
-      const b = await api.getBalance();
-      if (b !== undefined && b !== null) balance = `${b} DUST`;
-    } else if (typeof api.getDustBalance === 'function') {
-      const b = await api.getDustBalance();
-      if (b !== undefined && b !== null) balance = `${b} DUST`;
-    } else if (typeof api.state === 'function') {
-      const st = await api.state();
-      if (st?.balance !== undefined) balance = `${st.balance} DUST`;
+    const extractBal = (res: any) => {
+      if (typeof res === 'object') return res?.balance || res?.amount || res?.value || res?.unshielded || '0';
+      return String(res);
+    };
+
+    if (typeof api.getDustBalance === 'function') {
+      balance = `${extractBal(await api.getDustBalance())} DUST`;
+    } else if (typeof api.getBalance === 'function') {
+      balance = `${extractBal(await api.getBalance())} DUST`;
     }
   } catch (e) {
     console.warn('Balance fetch error:', e);
