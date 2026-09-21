@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node tests/runner.js"
+    "test": "node tests/runner.js",
+    "devnet:start": "docker compose up -d",
+    "devnet:stop": "docker compose down"
   },
   "dependencies": {
     "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
