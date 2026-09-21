@@ -337,7 +337,27 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!api) throw new Error('API not available');
 
       if (typeof api.signData === 'function') {
-        await api.signData(state.address || '', payload);
+        const formats = [
+          [state.address || '', { data: payload, options: { encoding: 'text' } }],
+          [state.address || '', payload],
+          [state.address || '', Buffer.from(payload).toString('hex')]
+        ];
+        
+        let success = false;
+        let lastErr = null;
+        for (const args of formats) {
+          try {
+            await api.signData(...args);
+            success = true;
+            break;
+          } catch (e: any) {
+            lastErr = e;
+            if (e?.code === 4001 || String(e?.message).toLowerCase().includes('reject')) {
+              throw e; // Bubble up user rejection immediately
+            }
+          }
+        }
+        if (!success) throw lastErr || new Error('Signature failed with all payload formats.');
       } else if (typeof api.signMessage === 'function') {
         await api.signMessage(state.address || '', payload);
       } else {
