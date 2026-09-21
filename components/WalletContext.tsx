@@ -27,6 +27,7 @@ interface WalletContextValue extends WalletState {
   addRewardBalance: (amount: number) => void;
   isConnected: boolean;
   checkInjectedMidnight: () => { hasMidnight: boolean; wallets: string[] };
+  invokeWalletSignature: (payload?: string) => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
@@ -325,6 +326,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const invokeWalletSignature = useCallback(async (payload: string = 'Confirm transaction') => {
+    try {
+      const { wallets } = discoverMidnightWallets();
+      const selected = wallets.find((w) => w.key.toLowerCase().includes('1am') || w.name.toLowerCase().includes('1am')) || wallets[0];
+      if (!selected) throw new Error('Wallet not detected');
+      
+      const walletObj = selected.raw;
+      const api = typeof walletObj.connect === 'function' ? await walletObj.connect('preprod') : null;
+      if (!api) throw new Error('API not available');
+
+      if (typeof api.signData === 'function') {
+        await api.signData(state.address || '', payload);
+      } else if (typeof api.signMessage === 'function') {
+        await api.signMessage(state.address || '', payload);
+      } else {
+        console.warn('signData not available on this wallet version, fallback to connection popup');
+      }
+    } catch (e) {
+      console.warn('Signature rejected or failed', e);
+      throw e;
+    }
+  }, [state.address]);
+
   return (
     <WalletContext.Provider
       value={{
@@ -335,6 +359,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         addRewardBalance,
         isConnected: state.status === 'connected',
         checkInjectedMidnight,
+        invokeWalletSignature,
       }}
     >
       {children}

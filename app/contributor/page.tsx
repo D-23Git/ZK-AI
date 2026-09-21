@@ -30,7 +30,7 @@ import { useWallet } from '@/components/WalletContext';
 import { WalletButton } from '@/components/WalletConnect';
 
 export default function ContributorPage() {
-  const { isConnected, address, walletType, balance, addRewardBalance } = useWallet();
+  const { isConnected, address, walletType, balance, addRewardBalance, invokeWalletSignature } = useWallet();
   // State for workflow
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('AI-PROJECT-001');
@@ -343,6 +343,9 @@ export default function ContributorPage() {
     setIsSubmitting(true);
 
     try {
+      // Prompt 1AM wallet signature popup
+      await invokeWalletSignature('Sign Zero-Knowledge Proof Submission for Midnight Preprod');
+      
       const res = await fetch('/api/contributions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
