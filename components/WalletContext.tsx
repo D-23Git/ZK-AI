@@ -353,36 +353,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!api) throw new Error('API not available');
 
       if (typeof api.signData === 'function') {
-        const hexPayload = Buffer.from(payload).toString('hex');
-        const formats = [
-          // 1AM specific object payload (no address arg)
-          [{ data: payload, options: { encoding: 'text' } }],
-          [{ data: hexPayload, options: { encoding: 'hex' } }],
-          // CIP-30 / other standard payload with address arg
-          [state.address || '', { data: payload, options: { encoding: 'text' } }],
-          [state.address || '', { data: hexPayload, options: { encoding: 'hex' } }],
-          [state.address || '', payload],
-          [state.address || '', hexPayload],
-          // Generic two arg
-          [payload, { encoding: 'text' }],
-          [hexPayload, { encoding: 'hex' }]
-        ];
-        
-        let success = false;
-        let lastErr = null;
-        for (const args of formats) {
-          try {
-            await api.signData(...args);
-            success = true;
-            break;
-          } catch (e: any) {
-            lastErr = e;
-            if (e?.code === 4001 || String(e?.message).toLowerCase().includes('reject')) {
-              throw e; // Bubble up user rejection immediately
-            }
-          }
-        }
-        if (!success) throw lastErr || new Error('Signature failed with all payload formats.');
+        // The 1AM Wallet DApp Connector injected script expects: signData(address, payloadObject)
+        // where payloadObject is { data: string, options: { encoding: 'text' | 'hex' | 'base64' } }
+        await api.signData(state.address || '', { 
+          data: payload, 
+          options: { encoding: 'text' } 
+        });
       } else if (typeof api.signMessage === 'function') {
         await api.signMessage(state.address || '', payload);
       } else {
