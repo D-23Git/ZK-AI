@@ -72,13 +72,14 @@ export default function Footer() {
             <ul className="space-y-2 text-xs">
               <li>
                 <a
-                  href="https://x.com/privatedata_ai"
+                  href="https://x.com/Dbadhe23"
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-cyan-400 transition-colors flex items-center gap-1"
+                  className="hover:text-cyan-400 transition-colors flex items-center gap-2 bg-slate-800/50 p-2 rounded-md border border-slate-700/50 hover:border-cyan-500/50 w-max"
                 >
-                  <span>Public X Profile (@privatedata_ai)</span>
-                  <ExternalLink className="w-3 h-3" />
+                  <svg viewBox="0 0 24 24" aria-hidden="true" className="w-4 h-4 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+                  <span className="font-semibold text-white tracking-wide">Public X Profile (@Dbadhe23)</span>
+                  <ExternalLink className="w-3 h-3 text-cyan-500" />
                 </a>
               </li>
               <li>

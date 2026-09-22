@@ -23,7 +23,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-cyan-950/60 bg-[#070B14]/90 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-[#060911]/60 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
       {/* Top Protocol Status Banner */}
       <div className="bg-gradient-to-r from-blue-950/50 via-cyan-950/40 to-purple-950/50 px-4 py-1 text-[11px] text-cyan-300 flex items-center justify-between border-b border-cyan-900/30">
         <div className="flex items-center space-x-2">
