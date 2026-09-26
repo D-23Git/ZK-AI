@@ -1,5 +1,5 @@
 // =============================================================================
-// PrivateData AI - Midnight Network Configuration
+// AURA ZK-AI - Midnight Network Configuration
 // Preprod / Testnet / Local Simulator Configuration
 // =============================================================================
 
@@ -19,9 +19,8 @@ export const MIDNIGHT_CONFIG: MidnightConfig = {
   indexerUrl: process.env.MIDNIGHT_INDEXER_URL || 'https://indexer.preprod.midnight.network/api/v1/graphql',
   nodeUrl: process.env.MIDNIGHT_NODE_URL || 'https://rpc.preprod.midnight.network',
   proofServerUrl: process.env.MIDNIGHT_PROOF_SERVER_URL || 'http://localhost:6300',
-  contractAddress: process.env.MIDNIGHT_CONTRACT_ADDRESS || '0300b88604f0139ff7e3cc24a3a6c5434840d6d53493767e6ba13bce52eab90b3896',
-  contractPackage: 'privatedata_ai_contract_v1',
-  explorerBaseUrl: 'https://explorer.preprod.midnight.network',
-  // Toggles between real Midnight compact contract execution and devnet cryptographic simulation
+  contractAddress: process.env.MIDNIGHT_CONTRACT_ADDRESS || '82f0731b0b4c5c81c44e0c14b21a2c1ee930a13109df422cf8b60bf954ee0c0b',
+  contractPackage: 'aura_zk_ai_contract_v1',
+  explorerBaseUrl: 'https://preprod.midnightexplorer.com/contracts',
   useLiveNetwork: process.env.MIDNIGHT_USE_LIVE === 'true'
 };

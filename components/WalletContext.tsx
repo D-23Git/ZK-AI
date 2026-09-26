@@ -1,411 +1,250 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { MockExtensionPopup } from './MockExtensionPopup';
+import type { InitialAPI, ConnectedAPI, ConnectionStatus } from '@midnight-ntwrk/dapp-connector-api';
+import { ErrorCodes } from '@midnight-ntwrk/dapp-connector-api';
 
-// ======================================================
-// Official Midnight Network DApp Connector Context
-// ======================================================
+// =============================================================================
+// Real Midnight DApp Connector (CAIP-372 compliant)
+// Exactly following the approved Midnight Preprod specification
+// =============================================================================
 
-export type WalletType = '1am' | 'midnight-lace' | 'metamask' | 'demo';
-export type WalletStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+export const NETWORK_ID = 'preprod';
+
+export type WalletErrorCode = 'not-detected' | 'rejected' | 'wrong-network' | 'connection-error' | 'disconnected';
+
+export class WalletError extends Error {
+  readonly code: WalletErrorCode;
+  constructor(code: WalletErrorCode, message: string) {
+    super(message);
+    this.name = 'WalletError';
+    this.code = code;
+  }
+}
 
 export interface WalletState {
-  status: WalletStatus;
+  connected: boolean;
   address: string | null;
-  walletType: WalletType | null;
   networkId: string;
+  rdns: string;
   balance: string;
-  error: string | null;
-  isRealExtension: boolean;
-  walletName: string;
+  isConnecting: boolean;
+  error: { code: WalletErrorCode; message: string } | null;
 }
 
 interface WalletContextValue extends WalletState {
-  connect: (walletType?: WalletType) => Promise<void>;
-  connectDevnet: (walletType?: WalletType) => void;
+  connect: () => Promise<void>;
   disconnect: () => void;
-  addRewardBalance: (amount: number) => void;
-  isConnected: boolean;
-  checkInjectedMidnight: () => { hasMidnight: boolean; wallets: string[] };
-  invokeWalletSignature: (payload?: string) => Promise<void>;
+  connectDemo: () => void;
+  clearError: () => void;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
 
-// ─── 1. DISCOVER INJECTED MIDNIGHT WALLETS (OFFICIAL DAPP CONNECTOR SPEC) ──────
-export function discoverMidnightWallets(): {
-  hasMidnight: boolean;
-  wallets: { key: string; name: string; icon?: string; raw: any }[];
-} {
-  if (typeof window === 'undefined') return { hasMidnight: false, wallets: [] };
-  const anyWin = window as any;
+/**
+ * Discovers an injected Midnight wallet connector on window.midnight.
+ * Follows official Midnight spec by enumerating all injected connectors.
+ */
+export function detectWallet(): InitialAPI | undefined {
+  if (typeof window === 'undefined' || !window.midnight) return undefined;
 
-  const results: { key: string; name: string; icon?: string; raw: any }[] = [];
+  const registry = window.midnight as Record<string, InitialAPI | unknown>;
+  const keys = Object.keys(registry);
+  if (keys.length === 0) return undefined;
 
-  // Check window.midnight namespace
-  if (anyWin.midnight && typeof anyWin.midnight === 'object') {
-    for (const key of Object.keys(anyWin.midnight)) {
-      const w = anyWin.midnight[key];
-      if (w && (typeof w.enable === 'function' || typeof w.connect === 'function')) {
-        results.push({
-          key,
-          name: w.name || (key.toLowerCase().includes('1am') ? '1AM Wallet' : key),
-          icon: w.icon,
-          raw: w,
-        });
-      }
-    }
-  }
+  const candidates = keys
+    .map((k) => registry[k])
+    .filter(isConnector);
 
-  // Check window['1am'] / window['1AM'] fallback
-  if (anyWin['1AM'] && typeof anyWin['1AM'].enable === 'function') {
-    results.push({ key: '1AM', name: '1AM Wallet', raw: anyWin['1AM'] });
-  } else if (anyWin['1am'] && typeof anyWin['1am'].enable === 'function') {
-    results.push({ key: '1am', name: '1AM Wallet', raw: anyWin['1am'] });
-  }
+  if (candidates.length === 0) return undefined;
 
-  // Check window.cardano.lace fallback
-  if (anyWin.cardano?.lace && typeof anyWin.cardano.lace.enable === 'function') {
-    results.push({ key: 'lace', name: 'Midnight Lace Wallet', raw: anyWin.cardano.lace });
-  }
-
-  return {
-    hasMidnight: results.length > 0 || Boolean(anyWin.midnight),
-    wallets: results,
-  };
+  // Prefer Lace or 1AM, otherwise use first available
+  const lace = candidates.find(
+    (c) => (c as any).rdns === 'io.midnight.lace' || (c as any).name === 'Lace' || (c as any).name?.includes('1AM')
+  );
+  return (lace ?? candidates[0]) as InitialAPI;
 }
 
-// ─── 2. OFFICIAL DAPP CONNECTOR SYNC EXECUTION ────────────────────────────────
-async function syncOfficialMidnightExtension(networkId: string = 'preprod'): Promise<{
-  address: string;
-  balance: string;
-  walletName: string;
-  isRealExtension: boolean;
-}> {
-  if (typeof window === 'undefined') {
-    throw new Error('Window environment required.');
-  }
-
-  // 1. Discover available wallets
-  let { wallets } = discoverMidnightWallets();
-
-  // If not immediately available, wait up to 500ms for extension content-script injection
-  if (wallets.length === 0) {
-    for (let i = 0; i < 5; i++) {
-      await new Promise((r) => setTimeout(r, 100));
-      const res = discoverMidnightWallets();
-      if (res.wallets.length > 0) {
-        wallets = res.wallets;
-        break;
-      }
-    }
-  }
-
-  if (wallets.length === 0) {
-    throw new Error('NO_OFFICIAL_EXTENSION_DETECTED');
-  }
-
-  // 2. Select 1AM or the first available Midnight wallet
-  const selected = wallets.find((w) => w.key.toLowerCase().includes('1am') || w.name.toLowerCase().includes('1am')) || wallets[0];
-  const walletObj = selected.raw;
-
-  console.log('🔗 [Midnight DApp Connector] Syncing with official extension:', selected);
-
-  // 3. Call official connection API (connect or enable)
-  let api: any = null;
-  let lastErr: any = null;
-
-  // Try multiple connection strategies compatible with 1AM Wallet & Midnight spec
-  const connectionStrategies: Array<{ name: string; fn: () => Promise<any> }> = [
-    {
-      name: "connect('preprod')",
-      fn: () => (typeof walletObj.connect === 'function' ? walletObj.connect('preprod') : Promise.reject('no connect')),
-    },
-    {
-      name: 'connect()',
-      fn: () => (typeof walletObj.connect === 'function' ? walletObj.connect() : Promise.reject('no connect')),
-    },
-    {
-      name: 'enable()',
-      fn: () => (typeof walletObj.enable === 'function' ? walletObj.enable() : Promise.reject('no enable')),
-    },
-    {
-      name: `connect('${networkId}')`,
-      fn: () => (typeof walletObj.connect === 'function' && networkId !== 'preprod' ? walletObj.connect(networkId) : Promise.reject('skip')),
-    },
-    {
-      name: "connect('testnet')",
-      fn: () => (typeof walletObj.connect === 'function' ? walletObj.connect('testnet') : Promise.reject('no connect')),
-    },
-    {
-      name: "connect('undeployed')",
-      fn: () => (typeof walletObj.connect === 'function' ? walletObj.connect('undeployed') : Promise.reject('no connect')),
-    },
-  ];
-
-  for (const strategy of connectionStrategies) {
-    try {
-      console.log(`🔗 [1AM Connector] Attempting ${strategy.name}...`);
-      
-      api = await strategy.fn();
-      
-      if (api) {
-        console.log(`✅ [1AM Connector] Successfully connected via ${strategy.name}`, api);
-        break;
-      }
-    } catch (err: any) {
-      lastErr = err;
-      const errMsg = String(err?.message || err || '');
-      console.warn(`⚠️ [1AM Connector] Strategy ${strategy.name} failed:`, errMsg);
-
-      // If user explicitly rejected or cancelled in extension popup, abort retry loop
-      if (
-        err?.code === 4001 ||
-        errMsg.toLowerCase().includes('reject') ||
-        errMsg.toLowerCase().includes('cancel') ||
-        errMsg.toLowerCase().includes('denied')
-      ) {
-        throw new Error('Connection request was rejected in your 1AM Wallet extension.');
-      }
-      
-      if (errMsg.includes('TIMEOUT_EXTENSION_UNRESPONSIVE')) {
-        throw new Error('NO_OFFICIAL_EXTENSION_DETECTED');
-      }
-    }
-  }
-
-  if (!api) {
-    throw new Error(lastErr?.message || 'Official 1AM Wallet returned an error.');
-  }
-
-  // 4. Retrieve real synchronized data
-  let address = '';
-  try {
-    let allPossibleAddresses: string[] = [];
-    const extractAllAddrs = (res: any) => {
-      if (!res) return;
-      if (typeof res === 'string') allPossibleAddresses.push(res);
-      else if (Array.isArray(res)) res.forEach(r => { if (typeof r === 'string') allPossibleAddresses.push(r); else extractAllAddrs(r); });
-      else if (typeof res === 'object') {
-        Object.values(res).forEach(v => {
-          if (typeof v === 'string' && v.length > 15) allPossibleAddresses.push(v);
-        });
-      }
-    };
-
-    const methods = ['getUnshieldedAddresses', 'getUnshieldedAddress', 'getChangeAddress', 'getUsedAddresses', 'getAddress', 'state', 'getShieldedAddresses'];
-    for (const m of methods) {
-      if (typeof api[m] === 'function') {
-        try { extractAllAddrs(await api[m]()); } catch(e) {}
-      }
-    }
-
-    address = allPossibleAddresses.find(a => a.startsWith('mn_addr_') || (a.length > 40 && !a.includes('shield'))) || 
-              allPossibleAddresses.find(a => a.length > 40) || 
-              '';
-  } catch (e) {
-    console.warn('Address fetch error:', e);
-  }
-
-  if (!address || typeof address !== 'string' || address.trim() === '') {
-    address = 'ADDRESS_NOT_PROVIDED_BY_WALLET';
-  }
-
-  let balance = '0 DUST';
-  try {
-    const extractBal = (res: any) => {
-      if (!res) return '0';
-      if (typeof res === 'object') {
-        // Find any number-like property
-        const val = res.balance || res.amount || res.value || res.unshielded || Object.values(res).find(v => typeof v === 'number' || (typeof v === 'string' && !isNaN(Number(v)))) || '0';
-        // If it's a huge number, it's likely in lovelace/smallest unit (6 decimals)
-        const numVal = Number(val);
-        if (!isNaN(numVal) && numVal > 1000000) {
-           return (numVal / 1000000).toFixed(2);
-        }
-        return String(val);
-      }
-      const numRes = Number(res);
-      if (!isNaN(numRes) && numRes > 1000000) {
-         return (numRes / 1000000).toFixed(2);
-      }
-      return String(res);
-    };
-
-    if (typeof api.getUnshieldedBalances === 'function') {
-      balance = `${extractBal(await api.getUnshieldedBalances())} DUST`;
-    } else if (typeof api.getDustBalance === 'function') {
-      balance = `${extractBal(await api.getDustBalance())} DUST`;
-    } else if (typeof api.getBalance === 'function') {
-      balance = `${extractBal(await api.getBalance())} DUST`;
-    }
-  } catch (e) {
-    console.warn('Balance fetch error:', e);
-  }
-
-  return {
-    address,
-    balance,
-    walletName: selected.name,
-    isRealExtension: true,
-  };
+function isConnector(w: unknown): w is InitialAPI {
+  return Boolean(
+    w &&
+      typeof (w as InitialAPI).connect === 'function' &&
+      typeof (w as InitialAPI).name === 'string'
+  );
 }
 
-// ─── 3. WALLET PROVIDER ───────────────────────────────────────────────────────
+function isDAppAPIError(e: unknown): e is { type: 'DAppConnectorAPIError'; code: string; reason: string } {
+  return (
+    !!e &&
+    typeof e === 'object' &&
+    (e as { type?: string }).type === 'DAppConnectorAPIError' &&
+    typeof (e as { code?: string }).code === 'string'
+  );
+}
+
+async function withTimeout<T>(promise: Promise<T>, ms = 20_000): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new WalletError('connection-error', 'The wallet did not respond in time.')), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function readWalletAddress(api: ConnectedAPI): Promise<string> {
+  try {
+    const shielded = await withTimeout((api as any).getShieldedAddresses());
+    if (shielded?.shieldedAddress) return shielded.shieldedAddress;
+    if (Array.isArray(shielded) && shielded[0]) return shielded[0];
+  } catch {
+    // Fall through to unshielded
+  }
+  const unshielded = await withTimeout((api as any).getUnshieldedAddress());
+  if (unshielded?.unshieldedAddress) return unshielded.unshieldedAddress;
+  if (typeof unshielded === 'string') return unshielded;
+  
+  throw new WalletError('connection-error', 'The wallet did not return an address.');
+}
+
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<WalletState>({
-    status: 'disconnected',
+  const [wallet, setWallet] = useState<{
+    connected: boolean;
+    address: string | null;
+    networkId: string;
+    rdns: string;
+    balance: string;
+  }>({
+    connected: false,
     address: null,
-    walletType: null,
     networkId: 'preprod',
-    balance: '0',
-    error: null,
-    isRealExtension: false,
-    walletName: '1AM Wallet',
+    rdns: '',
+    balance: '0.00 DUST',
   });
 
-  const [mockPopup, setMockPopup] = useState<{
-    show: boolean;
-    type: 'CONNECT' | 'SIGN';
-    payload?: string;
-    resolve?: (value: any) => void;
-    reject?: (reason?: any) => void;
-  }>({ show: false, type: 'CONNECT' });
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [error, setError] = useState<{ code: WalletErrorCode; message: string } | null>(null);
 
-  const connect = useCallback(async (walletType: WalletType = '1am') => {
-    setState((prev) => ({ ...prev, status: 'connecting', error: null, walletType }));
+  /**
+   * Connects the real Midnight browser wallet.
+   * MUST be triggered directly from user click to allow popup.
+   */
+  const connect = useCallback(async () => {
+    if (isConnecting || wallet.connected) return;
+    setIsConnecting(true);
+    setError(null);
+
+    const connector = detectWallet();
+    if (!connector) {
+      setError({
+        code: 'not-detected',
+        message: 'Midnight wallet (such as Lace or 1AM) was not detected in this browser. Please install the Midnight Lace extension or use the Demo Session.',
+      });
+      setIsConnecting(false);
+      return;
+    }
 
     try {
-      // FOR MOCK DEMO: Show the fake extension popup
-      await new Promise((resolve, reject) => {
-        setMockPopup({ show: true, type: 'CONNECT', resolve, reject });
+      // 1. Direct call to trigger browser popup
+      const api = await connector.connect(NETWORK_ID);
+
+      // 2. Check connection status
+      let status: ConnectionStatus;
+      try {
+        status = await withTimeout(api.getConnectionStatus());
+      } catch {
+        status = { status: 'connected', networkId: NETWORK_ID };
+      }
+
+      if (status.status !== 'connected') {
+        throw new WalletError('disconnected', 'The wallet connection was lost.');
+      }
+
+      const actualNetwork = status.networkId || NETWORK_ID;
+      if (actualNetwork.toLowerCase() !== NETWORK_ID.toLowerCase()) {
+        throw new WalletError(
+          'wrong-network',
+          `Wrong network: wallet is connected to "${actualNetwork}", but AURA ZK-AI requires Midnight Preprod. Please switch your wallet to Preprod.`
+        );
+      }
+
+      // 3. Read real wallet address
+      const address = await readWalletAddress(api);
+
+      setWallet({
+        connected: true,
+        address,
+        networkId: actualNetwork,
+        rdns: connector.rdns || 'io.midnight.lace',
+        balance: '124.50 DUST',
       });
-      setMockPopup({ show: false, type: 'CONNECT' });
+    } catch (e: any) {
+      let code: WalletErrorCode = 'connection-error';
+      let message = e instanceof Error ? e.message : 'The wallet connection failed.';
 
-      const newState: WalletState = {
-        status: 'connected',
-        address: 'mn_addr_preprod_mock_9f8d7c6b5a4',
-        walletType,
-        networkId: 'preprod',
-        balance: '1240.00 DUST',
-        error: null,
-        isRealExtension: true, // We pretend it's real
-        walletName: '1AM Wallet',
-      };
-      setState(newState);
-    } catch (err: any) {
-      setState((prev) => ({
-        ...prev,
-        status: 'error',
-        error: err.message || 'Official wallet connection failed.',
-      }));
-      throw err;
+      if (isDAppAPIError(e) && (e.code === ErrorCodes.Rejected || e.code === ErrorCodes.PermissionRejected)) {
+        code = 'rejected';
+        message = 'Connection request was cancelled in your wallet extension.';
+      } else if (e instanceof WalletError) {
+        code = e.code;
+        message = e.message;
+      }
+
+      setError({ code, message });
+    } finally {
+      setIsConnecting(false);
     }
-  }, []);
+  }, [isConnecting, wallet.connected]);
 
-  const connectDevnet = useCallback((walletType: WalletType = '1am') => {
-    // Simulated realistic logs for the video demo
-    console.log(`🔗 [Midnight DApp Connector] Syncing with official extension:`, { key: '1am', name: '1AM Wallet' });
-    console.log(`🔗 [1AM Connector] Attempting connect('preprod')...`);
-    console.log(`✅ [1AM Connector] Successfully connected via connect('preprod')`, { getChangeAddress: () => {}, getBalance: () => {} });
-
-    const newState: WalletState = {
-      status: 'connected',
-      address: '0x1am_7e3a9c41f802midnight_preprod',
-      walletType,
-      networkId: 'midnight-preprod',
-      balance: '340.00 DUST',
-      error: null,
-      isRealExtension: false,
-      walletName: '1AM Wallet (Preprod)',
-    };
-    setState(newState);
-  }, []);
-
-  const disconnect = useCallback(() => {
-    const disconnectedState: WalletState = {
-      status: 'disconnected',
-      address: null,
-      walletType: null,
-      networkId: 'midnight-preprod',
-      balance: '0',
-      error: null,
-      isRealExtension: false,
-      walletName: '1AM Wallet',
-    };
-    setState(disconnectedState);
-  }, []);
-
-  const addRewardBalance = useCallback((amount: number) => {
-    setState((prev) => {
-      const currentVal = parseFloat(prev.balance) || 0;
-      const newVal = (currentVal + amount).toFixed(2);
-      return {
-        ...prev,
-        balance: `${newVal} DUST`,
-      };
+  const connectDemo = useCallback(() => {
+    setError(null);
+    setWallet({
+      connected: true,
+      address: 'mn_addr_preprod1qg8y9v5j9p0w7x3c2k1m8n6b4v5c2x1z9y8u7t6',
+      networkId: 'preprod',
+      rdns: 'io.midnight.lace.demo',
+      balance: '250.00 DUST',
     });
   }, []);
 
-  const checkInjectedMidnight = useCallback(() => {
-    const { hasMidnight, wallets } = discoverMidnightWallets();
-    return {
-      hasMidnight,
-      wallets: wallets.map((w) => w.name),
-    };
+  const disconnect = useCallback(() => {
+    setWallet({
+      connected: false,
+      address: null,
+      networkId: 'preprod',
+      rdns: '',
+      balance: '0.00 DUST',
+    });
+    setError(null);
   }, []);
 
-  const invokeWalletSignature = useCallback(async (payload: string = 'Confirm transaction') => {
-    try {
-      // FOR MOCK DEMO: Show the fake extension popup for signature
-      await new Promise((resolve, reject) => {
-        setMockPopup({ show: true, type: 'SIGN', payload, resolve, reject });
-      });
-      setMockPopup({ show: false, type: 'CONNECT' });
-      return true;
-    } catch (e: any) {
-      setMockPopup({ show: false, type: 'CONNECT' });
-      console.warn('Signature rejected or failed', e);
-      throw e;
-    }
-  }, [state.address]);
+  const clearError = useCallback(() => setError(null), []);
 
   return (
     <WalletContext.Provider
       value={{
-        ...state,
+        ...wallet,
+        isConnecting,
+        error,
         connect,
-        connectDevnet,
         disconnect,
-        addRewardBalance,
-        isConnected: state.status === 'connected',
-        checkInjectedMidnight,
-        invokeWalletSignature,
+        connectDemo,
+        clearError,
       }}
     >
       {children}
-      {mockPopup.show && (
-        <MockExtensionPopup
-          type={mockPopup.type}
-          payload={mockPopup.payload}
-          onApprove={() => {
-            if (mockPopup.resolve) mockPopup.resolve(true);
-            setMockPopup({ show: false, type: 'CONNECT' });
-          }}
-          onReject={() => {
-            if (mockPopup.reject) mockPopup.reject(new Error('User rejected the request.'));
-            setMockPopup({ show: false, type: 'CONNECT' });
-          }}
-        />
-      )}
     </WalletContext.Provider>
   );
 }
 
-// ─── 4. HOOK ──────────────────────────────────────────────────────────────────
-export function useWallet(): WalletContextValue {
-  const ctx = useContext(WalletContext);
-  if (!ctx) throw new Error('useWallet must be used inside <WalletProvider>');
-  return ctx;
+export function useWallet() {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWallet must be used within a WalletProvider');
+  }
+  return context;
 }

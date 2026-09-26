@@ -1,349 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState } from 'react';
 import { useWallet } from './WalletContext';
+import { Shield, Check, Copy, ExternalLink, AlertCircle, RefreshCw, X, Download } from 'lucide-react';
 
-function shortenAddress(addr: string) {
+function shortenAddress(addr: string | null) {
   if (!addr) return '';
-  if (addr.length > 18) return addr.slice(0, 8) + '...' + addr.slice(-6);
+  if (addr.length > 18) return addr.slice(0, 10) + '...' + addr.slice(-6);
   return addr;
 }
 
-// ─── OFFICIAL 1AM WALLET SYNC & AUTHORIZATION MODAL ────────────────────────────
-function OfficialSyncModal({
-  onClose,
-  errorMessage,
-  onRetry,
-  onDevnetSync,
-}: {
-  onClose: () => void;
-  errorMessage: string | null;
-  onRetry: () => void;
-  onDevnetSync: () => void;
-}) {
-  const [mounted, setMounted] = useState<boolean>(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted || typeof document === 'undefined') return null;
-
-  const isNotDetected = errorMessage === 'NO_OFFICIAL_EXTENSION_DETECTED' || errorMessage?.includes('NOT_DETECTED');
-
-  return createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 999999999,
-        background: 'rgba(3, 7, 18, 0.88)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        animation: 'backdropFadeIn 0.2s ease',
-      }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        style={{
-          width: '450px',
-          maxWidth: '96vw',
-          background: '#0B0F17',
-          borderRadius: '22px',
-          boxShadow: '0 30px 100px rgba(0, 0, 0, 0.95), 0 0 50px rgba(6, 182, 212, 0.45)',
-          border: isNotDetected ? '2px solid rgba(239, 68, 68, 0.7)' : '2px solid rgba(6, 182, 212, 0.75)',
-          overflow: 'hidden',
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-          animation: 'popupSpring 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-        }}
-      >
-        {/* Top Bar */}
-        <div
-          style={{
-            background: '#070A0F',
-            padding: '14px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '22px' }}>⏱</span>
-            <span style={{ fontWeight: 800, fontSize: '18px', color: '#fff' }}>1AM Wallet</span>
-            <span style={{ color: '#FACC15', fontSize: '15px' }}>⚡</span>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span
-              style={{
-                background: 'rgba(16,185,129,0.18)',
-                border: '1px solid rgba(16,185,129,0.45)',
-                color: '#34D399',
-                fontSize: '10px',
-                fontWeight: 800,
-                fontFamily: 'monospace',
-                padding: '3px 8px',
-                borderRadius: '6px',
-              }}
-            >
-              PREPROD SYNC
-            </span>
-
-            <div style={{ background: '#fff', color: '#070A0F', fontWeight: 900, fontSize: '12px', padding: '3px 7px', borderRadius: '5px' }}>
-              WA
-            </div>
-
-            <button
-              onClick={onClose}
-              style={{
-                background: 'rgba(255,255,255,0.08)',
-                border: 'none',
-                color: '#94A3B8',
-                cursor: 'pointer',
-                fontSize: '15px',
-                width: '26px',
-                height: '26px',
-                borderRadius: '50%',
-              }}
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div style={{ padding: '24px 20px', textAlign: 'center', background: '#0F172A' }}>
-          {isNotDetected ? (
-            <div>
-              <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '2px solid rgba(239, 68, 68, 0.5)',
-                  margin: '0 auto 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                }}
-              >
-                ⚠️
-              </div>
-
-              <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: '17px', fontWeight: 800 }}>
-                1AM Chrome Extension Sync
-              </h3>
-
-              <p style={{ margin: '0 0 16px', color: '#94A3B8', fontSize: '13px', lineHeight: 1.5 }}>
-                Please click the <strong>⏱️ 1AM Wallet</strong> icon in your Chrome toolbar to grant permissions, or use direct Preprod Sync:
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'linear-gradient(135deg, #06B6D4 0%, #2563EB 100%)',
-                    border: 'none',
-                    borderRadius: '12px',
-                    color: '#030712',
-                    fontWeight: 800,
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 16px rgba(6,182,212,0.4)',
-                  }}
-                >
-                  🔄 Retry Official Sync (window.midnight)
-                </button>
-
-                <button
-                  type="button"
-                  onClick={onDevnetSync}
-                  style={{
-                    width: '100%',
-                    padding: '11px',
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '12px',
-                    color: '#CBD5E1',
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  ⚡ Authorize &amp; Sync Preprod Account (WA)
-                </button>
-              </div>
-            </div>
-          ) : errorMessage ? (
-            <div>
-              <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '2px solid rgba(239, 68, 68, 0.5)',
-                  margin: '0 auto 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '24px',
-                }}
-              >
-                ✕
-              </div>
-
-              <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: '17px', fontWeight: 800 }}>
-                Extension Response
-              </h3>
-
-              <p style={{ margin: '0 0 18px', color: '#FCA5A5', fontSize: '13px', lineHeight: 1.5 }}>
-                {errorMessage}
-              </p>
-
-              <button
-                type="button"
-                onClick={onRetry}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: 'linear-gradient(135deg, #06B6D4 0%, #2563EB 100%)',
-                  border: 'none',
-                  borderRadius: '12px',
-                  color: '#030712',
-                  fontWeight: 800,
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                }}
-              >
-                🔄 Retry Official Connection
-              </button>
-            </div>
-          ) : (
-            <div>
-              <div
-                style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  background: 'rgba(6, 182, 212, 0.15)',
-                  border: '2px solid rgba(6, 182, 212, 0.6)',
-                  margin: '0 auto 18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '30px',
-                  animation: 'spinPulse 1.6s infinite ease-in-out',
-                }}
-              >
-                ⏱️
-              </div>
-
-              <h3 style={{ margin: '0 0 8px', color: '#fff', fontSize: '18px', fontWeight: 800 }}>
-                Syncing with 1AM Wallet Extension...
-              </h3>
-
-              <p style={{ margin: '0 0 16px', color: '#94A3B8', fontSize: '13px', lineHeight: 1.5 }}>
-                Request sent via Official Midnight DApp Connector. Please approve it in your 1AM Extension Pop-up.
-              </p>
-
-              <div
-                style={{
-                  background: 'rgba(6, 182, 212, 0.08)',
-                  border: '1px solid rgba(6, 182, 212, 0.3)',
-                  borderRadius: '12px',
-                  padding: '10px 14px',
-                  marginBottom: '18px',
-                  fontSize: '11px',
-                  color: '#38BDF8',
-                  fontFamily: 'monospace',
-                }}
-              >
-                ⚡ Calling: <code>window.midnight.connect(&apos;preprod&apos;)</code>
-              </div>
-
-              <button
-                type="button"
-                onClick={onClose}
-                style={{
-                  padding: '9px 20px',
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: '10px',
-                  color: '#CBD5E1',
-                  fontWeight: 600,
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes backdropFadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes popupSpring {
-          from { opacity: 0; transform: scale(0.92) translateY(16px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes spinPulse {
-          0%   { transform: scale(1); box-shadow: 0 0 0 rgba(6, 182, 212, 0.4); }
-          50%  { transform: scale(1.1); box-shadow: 0 0 25px rgba(6, 182, 212, 0.7); }
-          100% { transform: scale(1); box-shadow: 0 0 0 rgba(6, 182, 212, 0.4); }
-        }
-      `}</style>
-    </div>,
-    document.body
-  );
-}
-
-// ─── WALLET BUTTON ────────────────────────────────────────────────────────────
 export function WalletButton() {
-  const { isConnected, address, balance, disconnect, connect, connectDevnet } = useWallet();
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showDropdown, setShowDropdown] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
+  const { connected, address, balance, isConnecting, error, connect, disconnect, connectDemo, clearError } = useWallet();
+  const [copied, setCopied] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
 
-  const handleConnectClick = async () => {
-    setErrorMessage(null);
-
-    try {
-      await connect('1am');
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Official wallet connection failed.');
-    }
-  };
-
-  const handleDevnetSync = () => {
-    connectDevnet('1am');
-    setIsSyncing(false);
-    setErrorMessage(null);
-  };
-
-  const handleCopy = () => {
+  const copyAddr = () => {
     if (address) {
-      navigator.clipboard?.writeText(address);
+      navigator.clipboard.writeText(address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -351,166 +25,157 @@ export function WalletButton() {
 
   return (
     <>
-      {isConnected ? (
-        <div style={{ position: 'relative' }}>
+      <div className="relative">
+        {!connected ? (
           <button
-            type="button"
-            onClick={() => setShowDropdown(!showDropdown)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 14px',
-              background: 'rgba(6, 182, 212, 0.12)',
-              border: '1px solid rgba(6, 182, 212, 0.45)',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              color: '#fff',
-              fontSize: '13px',
-              fontWeight: 600,
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.border = '1px solid rgba(6, 182, 212, 0.8)';
-              e.currentTarget.style.background = 'rgba(6, 182, 212, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.border = '1px solid rgba(6, 182, 212, 0.45)';
-              e.currentTarget.style.background = 'rgba(6, 182, 212, 0.12)';
-            }}
+            onClick={connect}
+            disabled={isConnecting}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-bold text-xs flex items-center gap-2 transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer disabled:opacity-50"
           >
-            <span
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                background: '#10b981',
-                boxShadow: '0 0 6px #10b981',
-                display: 'inline-block',
-              }}
-            />
-            <span>⏱️</span>
-            <span style={{ fontFamily: 'monospace' }}>WA ({shortenAddress(address || '')})</span>
-            <span style={{ color: '#94a3b8', fontSize: '10px' }}>▼</span>
+            {isConnecting ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Approving in Wallet...</span>
+              </>
+            ) : (
+              <>
+                <Shield className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Connect Wallet</span>
+              </>
+            )}
           </button>
-
-          {showDropdown && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '115%',
-                right: 0,
-                background: '#070b14',
-                border: '1px solid rgba(6, 182, 212, 0.4)',
-                borderRadius: '16px',
-                padding: '14px',
-                minWidth: '260px',
-                zIndex: 1000,
-                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(6, 182, 212, 0.15)',
-              }}
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 border border-emerald-500/40 text-xs font-mono text-emerald-300 hover:border-emerald-400 flex items-center gap-2 shadow-sm transition-all cursor-pointer"
             >
-              <div style={{ padding: '8px 10px', borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: '8px' }}>
-                <div style={{ color: '#94a3b8', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
-                  CONNECTED MIDNIGHT WALLET
-                </div>
-                <div style={{ color: '#fff', fontSize: '13px', fontWeight: 700, marginTop: '2px' }}>
-                  ⏱️ 1AM Wallet • Account WA
-                </div>
-              </div>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{shortenAddress(address)}</span>
+              <span className="text-[10px] text-slate-400 bg-white/5 px-1.5 py-0.5 rounded">
+                {balance}
+              </span>
+            </button>
+          </div>
+        )}
 
-              <div style={{ padding: '6px 10px' }}>
-                <div style={{ color: '#94a3b8', fontSize: '10px' }}>Address</div>
-                <div
-                  onClick={handleCopy}
-                  title="Click to copy address"
-                  style={{
-                    color: '#22d3ee',
-                    fontSize: '11px',
-                    wordBreak: 'break-all',
-                    fontFamily: 'monospace',
-                    cursor: 'pointer',
-                    marginTop: '2px',
-                  }}
-                >
-                  {address} {copied ? '✅' : '📋'}
-                </div>
-              </div>
+        {/* Dropdown Menu when Connected */}
+        {connected && showDropdown && (
+          <div className="absolute right-0 mt-2 w-64 p-3 bg-slate-900/95 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-2xl z-50 text-xs space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <span className="text-slate-400 font-semibold">Midnight Preprod</span>
+              <span className="text-emerald-400 text-[10px] font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                ACTIVE
+              </span>
+            </div>
 
-              <div style={{ padding: '6px 10px' }}>
-                <div style={{ color: '#94a3b8', fontSize: '10px' }}>DUST Balance</div>
-                <div style={{ color: '#10b981', fontSize: '13px', fontWeight: 700, fontFamily: 'monospace' }}>
-                  {balance}
-                </div>
-              </div>
-
-              <div style={{ padding: '6px 10px', marginBottom: '8px' }}>
-                <div style={{ color: '#94a3b8', fontSize: '10px' }}>Network</div>
-                <div style={{ color: '#fff', fontSize: '11px', fontWeight: 600 }}>
-                  Midnight Preprod Live
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  disconnect();
-                  setShowDropdown(false);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '9px',
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: '10px',
-                  color: '#fca5a5',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  transition: 'all 0.15s',
-                }}
-              >
-                🔌 Disconnect Wallet
+            <div className="bg-black/50 p-2 rounded-xl font-mono text-[11px] text-slate-300 flex items-center justify-between break-all">
+              <span className="truncate mr-2">{address}</span>
+              <button onClick={copyAddr} className="text-slate-400 hover:text-white flex-shrink-0">
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
             </div>
-          )}
+
+            <div className="flex justify-between items-center text-[11px]">
+              <span className="text-slate-400">Available Balance:</span>
+              <span className="font-mono font-bold text-white">{balance}</span>
+            </div>
+
+            <button
+              onClick={() => {
+                disconnect();
+                setShowDropdown(false);
+              }}
+              className="w-full py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 font-medium text-center transition-all cursor-pointer"
+            >
+              Disconnect Wallet
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Real Wallet Error / Installation Guidance Modal */}
+      {error && (
+        <div className="fixed inset-0 z-[999999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-[#0a0f1d] border border-emerald-500/30 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-emerald-400">
+                <AlertCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                <h3 className="text-sm font-bold text-white">
+                  {error.code === 'not-detected'
+                    ? 'Midnight Wallet Not Detected'
+                    : error.code === 'rejected'
+                    ? 'Connection Cancelled'
+                    : 'Wallet Connection Notice'}
+                </h3>
+              </div>
+              <button
+                onClick={clearError}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {error.message}
+            </p>
+
+            {error.code === 'not-detected' && (
+              <div className="p-3 bg-black/40 rounded-xl border border-white/5 text-[11px] text-slate-400 space-y-1">
+                <div className="text-slate-200 font-medium">To connect a real wallet:</div>
+                <div>1. Install the official <strong>Midnight Lace Wallet</strong> extension.</div>
+                <div>2. Set your network to <strong>Midnight Preprod</strong>.</div>
+                <div>3. Refresh this page and click Connect.</div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              {error.code === 'not-detected' ? (
+                <>
+                  <a
+                    href="https://docs.midnight.network/relnotes/lace"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Install Lace Wallet
+                  </a>
+                  <button
+                    onClick={() => {
+                      clearError();
+                      connectDemo();
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-white/10 transition-all cursor-pointer"
+                  >
+                    Use Demo Session
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      clearError();
+                      connect();
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={() => {
+                      clearError();
+                      connectDemo();
+                    }}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-white/10 transition-all cursor-pointer"
+                  >
+                    Use Demo Session
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={handleConnectClick}
-          disabled={isSyncing}
-          style={{
-            padding: '9px 18px',
-            background: isSyncing
-              ? 'rgba(6, 182, 212, 0.4)'
-              : 'linear-gradient(135deg, #06b6d4 0%, #2563eb 100%)',
-            border: 'none',
-            borderRadius: '12px',
-            color: '#030712',
-            fontWeight: 800,
-            fontSize: '13px',
-            cursor: isSyncing ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s',
-            boxShadow: '0 4px 16px rgba(6, 182, 212, 0.3)',
-            whiteSpace: 'nowrap',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '7px',
-          }}
-          onMouseEnter={(e) => {
-            if (!isSyncing) {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(6, 182, 212, 0.45)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 16px rgba(6, 182, 212, 0.3)';
-          }}
-        >
-          <span>🔗</span>
-          <span>{isSyncing ? 'Syncing 1AM...' : 'Connect Wallet'}</span>
-        </button>
       )}
     </>
   );

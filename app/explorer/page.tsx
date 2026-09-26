@@ -25,9 +25,9 @@ export default function ExplorerPage() {
 
   const mockTxLogs: TransactionLog[] = [
     {
-      txHash: '0300b88604f0139ff7e3cc24a3a6c5434840d6d53493767e6ba13bce52eab90b3896',
+      txHash: '60f0ddeed366d71c9de496c538ceedc79be695c73ab7841874824cdf46351943',
       circuit: 'verify_contribution',
-      blockHeight: 189420,
+      blockHeight: 2418897,
       commitment: '0300994f8e...712a',
       gasDeducted: '0.00038 DUST',
       timestamp: '2 mins ago',
