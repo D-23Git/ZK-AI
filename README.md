@@ -98,6 +98,10 @@ export circuit verify_contribution(
 | **Proof Curve** | BLS12-381 |
 | **Circuit Target** | `contracts/build/zkir/verify_contribution.zkir` |
 
+### 📸 On-Chain Deployment Verification Screenshot
+
+![AURA ZK-AI Deployed on Midnight Preprod](./screenshots/preprod-deployment.png)
+
 ---
 
 ## 🛠️ Quickstart & Local Setup
