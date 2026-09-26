@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../",
+  "sources": ["contracts/PrivateDataProof.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAGA;;;;;;;;;;MAEA,AAAA,mBAWC;;;;;cAVG,cAAuB;cACvB,yBAAgC;cAChC,uBAA8B;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;yCAF9B,cAAuB,+BACvB,yBAAgC,+BAChC,uBAA8B;;;;;;;;;qDAF9B,cAAuB;qDACvB,yBAAgC;qDAChC,uBAA8B;;;OAQjC;;;;;;;;GACA;EAdD;;;;;;;;;;;;;;;;;;;;;;;;;;IAAA;;;;;;;;;yEAA2C;;;;;;;GAc1C;EAZD,AAAA,sBAWC;;yBAVG,cAAuB;yBACvB,yBAAgC;yBAChC,uBAA8B;;4BAGvB,yBAAuB;4BACvB,uBAAqB;UAG5B,KAAkB;;;;;6CAAI;;;;;;;;;;;kHAAkB;;;IAAxC;;;;;;;2HAAA,KAAkB;;yEAAA;;GACrB;;;;;;;;;;;;;;;;IAbD;qCAAA;;;;;;;;;;;0GAA2C;KAAA;;;;;;;;;;"
+}

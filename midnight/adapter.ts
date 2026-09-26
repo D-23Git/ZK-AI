@@ -54,6 +54,7 @@ export class MidnightAdapter {
         onChainConsensus: isLive
           ? `Midnight Preprod Validator Nodes at ${MIDNIGHT_CONFIG.nodeUrl}`
           : 'Synchronous Midnight Devnet State Ledger & In-Memory Storage',
+          
         explanation: isLive
           ? 'Live transactions are submitted to Midnight Preprod testnet.'
           : 'Zero-Knowledge constraints, commitments, and verification are cryptographically enforced in TypeScript matching the privatedata_ai.compact contract semantics. For air-gapped demo runs, this eliminates network timeout and wallet popup dependencies while preserving exact mathematical integrity.'

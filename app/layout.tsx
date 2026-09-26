@@ -6,22 +6,22 @@ import HelpAssistantWidget from '@/components/HelpAssistantWidget';
 import { WalletProvider } from '@/components/WalletContext';
 
 export const metadata: Metadata = {
-  title: 'PrivateData AI — Privacy-Preserving AI Data Contribution Platform',
-  description: 'Contribute private datasets to AI projects without exposing raw records using Midnight zero-knowledge technology. Prove data qualification without revealing data.',
+  title: 'AURA ZK-AI — Confidential AI Cloud & Autonomous Agent Guard',
+  description: 'Execute private AI inferences, enforce autonomous AI agent safety guardrails, and query encrypted enterprise knowledge — powered by Midnight Network Zero-Knowledge smart contracts.',
   keywords: [
-    'PrivateData AI',
+    'AURA ZK-AI',
     'Midnight Network',
-    'Zero Knowledge',
+    'Zero Knowledge AI',
     'ZK Proofs',
-    'AI Data Marketplace',
-    'Privacy Preserving AI',
+    'Confidential AI',
+    'Autonomous Agent Guard',
     'Compact Smart Contract',
     'Preprod'
   ],
-  authors: [{ name: 'PrivateData AI Team' }],
+  authors: [{ name: 'AURA ZK-AI Team' }],
   openGraph: {
-    title: 'PrivateData AI — Prove That Your Data Qualifies Without Revealing Your Data',
-    description: 'Privacy-preserving AI data contribution platform powered by Midnight zero-knowledge technology.',
+    title: 'AURA ZK-AI — Confidential AI Cloud. Proven in Zero-Knowledge.',
+    description: 'Privacy-preserving AI inference & autonomous agent guardrails on Midnight Network.',
     type: 'website',
   },
 };
@@ -33,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-[#070B14] text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950 flex flex-col">
+      <body className="min-h-screen bg-[#07090e] text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950 flex flex-col">
         <WalletProvider>
           <Navbar />
           <main className="flex-grow">

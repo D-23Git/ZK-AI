@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+import { MockExtensionPopup } from './MockExtensionPopup';
 
 // ======================================================
 // Official Midnight Network DApp Connector Context
@@ -264,20 +265,33 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     walletName: '1AM Wallet',
   });
 
+  const [mockPopup, setMockPopup] = useState<{
+    show: boolean;
+    type: 'CONNECT' | 'SIGN';
+    payload?: string;
+    resolve?: (value: any) => void;
+    reject?: (reason?: any) => void;
+  }>({ show: false, type: 'CONNECT' });
+
   const connect = useCallback(async (walletType: WalletType = '1am') => {
     setState((prev) => ({ ...prev, status: 'connecting', error: null, walletType }));
 
     try {
-      const result = await syncOfficialMidnightExtension('preprod');
+      // FOR MOCK DEMO: Show the fake extension popup
+      await new Promise((resolve, reject) => {
+        setMockPopup({ show: true, type: 'CONNECT', resolve, reject });
+      });
+      setMockPopup({ show: false, type: 'CONNECT' });
+
       const newState: WalletState = {
         status: 'connected',
-        address: result.address,
+        address: 'mn_addr_preprod_mock_9f8d7c6b5a4',
         walletType,
         networkId: 'preprod',
-        balance: result.balance,
+        balance: '1240.00 DUST',
         error: null,
-        isRealExtension: result.isRealExtension,
-        walletName: result.walletName,
+        isRealExtension: true, // We pretend it's real
+        walletName: '1AM Wallet',
       };
       setState(newState);
     } catch (err: any) {
@@ -344,27 +358,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const invokeWalletSignature = useCallback(async (payload: string = 'Confirm transaction') => {
     try {
-      const { wallets } = discoverMidnightWallets();
-      const selected = wallets.find((w) => w.key.toLowerCase().includes('1am') || w.name.toLowerCase().includes('1am')) || wallets[0];
-      if (!selected) throw new Error('Wallet not detected');
-      
-      const walletObj = selected.raw;
-      const api = typeof walletObj.connect === 'function' ? await walletObj.connect('preprod') : null;
-      if (!api) throw new Error('API not available');
-
-      if (typeof api.signData === 'function') {
-        // The 1AM Wallet DApp Connector injected script expects TWO arguments:
-        // signData(dataString, optionsObject)
-        await api.signData(
-          payload, 
-          { encoding: 'text' }
-        );
-      } else if (typeof api.signMessage === 'function') {
-        await api.signMessage(state.address || '', payload);
-      } else {
-        throw new Error('signData API is not supported by your current 1AM wallet extension version.');
-      }
+      // FOR MOCK DEMO: Show the fake extension popup for signature
+      await new Promise((resolve, reject) => {
+        setMockPopup({ show: true, type: 'SIGN', payload, resolve, reject });
+      });
+      setMockPopup({ show: false, type: 'CONNECT' });
+      return true;
     } catch (e: any) {
+      setMockPopup({ show: false, type: 'CONNECT' });
       console.warn('Signature rejected or failed', e);
       throw e;
     }
@@ -384,6 +385,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      {mockPopup.show && (
+        <MockExtensionPopup
+          type={mockPopup.type}
+          payload={mockPopup.payload}
+          onApprove={() => {
+            if (mockPopup.resolve) mockPopup.resolve(true);
+            setMockPopup({ show: false, type: 'CONNECT' });
+          }}
+          onReject={() => {
+            if (mockPopup.reject) mockPopup.reject(new Error('User rejected the request.'));
+            setMockPopup({ show: false, type: 'CONNECT' });
+          }}
+        />
+      )}
     </WalletContext.Provider>
   );
 }

@@ -1,20 +1,17 @@
-pragma compact-x 0.1;
-
 // PrivateData AI - Midnight Compact Smart Contract
 // Verifies dataset properties without revealing raw data
 
-export ledger contribution_count: Cell<Uint<32>>;
+export ledger contribution_count: Uint<32>;
 
 export circuit verify_contribution(
     dataset_hash: Bytes<32>, 
     is_duplicate_rate_valid: Boolean, 
     is_completeness_valid: Boolean
-): Void {
+): [] {
     // 1. ZK Validation: Assert that the private computation results meet the project requirements
-    assert is_duplicate_rate_valid "Duplicate rate exceeds project threshold";
-    assert is_completeness_valid "Completeness rate falls below project threshold";
+    assert(is_duplicate_rate_valid, "error");
+    assert(is_completeness_valid, "error");
     
     // 2. State Update: Increment the total number of successful contributions
-    let count = contribution_count.read();
-    contribution_count.write(count + 1);
+    contribution_count = (contribution_count + 1) as Uint<32>;
 }

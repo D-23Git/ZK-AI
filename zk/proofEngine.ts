@@ -23,7 +23,7 @@ export class MidnightZKProofService implements DatasetProofService {
 
   constructor(
     networkTarget: 'MIDNIGHT_PREPROD' | 'MIDNIGHT_DEVNET_SIMULATOR' = 'MIDNIGHT_DEVNET_SIMULATOR',
-    contractAddress: string = '0x9a8f4c2b1e7d3a509876543210abcdef0123456789abcdef0123456789abcdef'
+    contractAddress: string = '0300b88604f0139ff7e3cc24a3a6c5434840d6d53493767e6ba13bce52eab90b3896'
   ) {
     this.networkTarget = networkTarget;
     this.contractAddress = contractAddress;

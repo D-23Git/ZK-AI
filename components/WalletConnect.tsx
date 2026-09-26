@@ -258,7 +258,7 @@ function OfficialSyncModal({
               </h3>
 
               <p style={{ margin: '0 0 16px', color: '#94A3B8', fontSize: '13px', lineHeight: 1.5 }}>
-                Official Midnight DApp Connector द्वारे विनंती पाठवली आहे. कृपया तुमच्या 1AM Extension Pop-up मध्ये मान्यता द्या.
+                Request sent via Official Midnight DApp Connector. Please approve it in your 1AM Extension Pop-up.
               </p>
 
               <div
@@ -326,15 +326,12 @@ export function WalletButton() {
   const [copied, setCopied] = useState<boolean>(false);
 
   const handleConnectClick = async () => {
-    setIsSyncing(true);
     setErrorMessage(null);
 
     try {
       await connect('1am');
     } catch (err: any) {
       setErrorMessage(err.message || 'Official wallet connection failed.');
-    } finally {
-      setIsSyncing(false);
     }
   };
 
@@ -514,18 +511,6 @@ export function WalletButton() {
           <span>🔗</span>
           <span>{isSyncing ? 'Syncing 1AM...' : 'Connect Wallet'}</span>
         </button>
-      )}
-
-      {isSyncing && (
-        <OfficialSyncModal
-          onClose={() => {
-            setIsSyncing(false);
-            setErrorMessage(null);
-          }}
-          errorMessage={errorMessage}
-          onRetry={handleConnectClick}
-          onDevnetSync={handleDevnetSync}
-        />
       )}
     </>
   );
