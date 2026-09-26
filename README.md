@@ -10,14 +10,15 @@
 
 ---
 
-## 🏆 Rejection Fixes & Improvements Addressed
+## 🌟 Core Platform Highlights & Capabilities
 
-| # | Feedback / Issue | Solution Implemented | Status |
-|---|---|---|---|
-| 1 | **Invalid Contract Address** (`0x7a3F9B8b...` Ethereum format) | Replaced with verified on-chain Midnight Preprod contract address (`82f0731b0b4c5c81c44e0c14b21a2c1ee930a13109df422cf8b60bf954ee0c0b`). | ✅ FIXED |
-| 2 | **Complete Product Structure Overhaul** | Replaced basic data contribution with full-featured **Confidential AI Studio**, **Autonomous Agent Guardrails**, **Vector Vault**, and **Midnight ZK Explorer**. | ✅ FIXED |
-| 3 | **UI & Frontend Polish** | Luminous emerald & rich obsidian aesthetic, custom glassmorphism, responsive navigation, real-time proof simulators, and live Lace/Midnight DApp connector integration. | ✅ FIXED |
-| 4 | **X (Twitter) Profile Banner** | Public product identity at [@PrivateDataAI](https://x.com/PrivateDataAI) with Midnight project presence. | 🔗 ACTIVE |
+| Module | Core Capability | Zero-Knowledge Guarantee |
+|---|---|---|
+| **🧠 ZK-AI Studio** | Client-Side Prompt Shielding & Private LLM Inference | Raw prompts & responses never leave client enclave unblinded |
+| **🤖 Agent Guard** | Autonomous AI Agent Guardrails on Midnight Compact | Enforces spending caps & policy compliance via on-chain ZK proofs |
+| **🔐 Vector Vault** | Shielded Knowledge Embeddings & Private RAG | Semantic similarity proved without exposing proprietary documents |
+| **🔍 Midnight ZK Explorer** | Live On-Chain Contract & Circuit Telemetry | Direct inspection of Preprod state, commitments, and DUST gas |
+| **📊 Model Benchmarks** | Verifiable Model Safety & Bias Audits | Cryptographically proves SLA compliance without leaking model weights |
 
 ---
 
