@@ -110,7 +110,7 @@ export default function BenchmarksPage() {
               <span>Model Benchmark Assertion Verified: Compact Contract updated with verified 95.2% accuracy assertion.</span>
             </div>
             <span className="font-mono text-[10px] bg-black/40 px-2 py-1 rounded border border-emerald-500/20">
-              Tx: 0300b886...b3896
+              Tx: 60f0ddeed366...1943
             </span>
           </div>
         )}
